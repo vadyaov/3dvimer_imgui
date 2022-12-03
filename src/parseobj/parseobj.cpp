@@ -5,11 +5,12 @@ void parseObj(const char *filename, modelData *m) {
   FILE *f = fopen(filename, "r");
 
   std::vector<glm::vec3> noSortVert;
-  std::vector<size_t> faces;
+  std::vector<size_t> indexes;
 
   char *line = NULL;
   size_t len = 0;
   ssize_t read = 0;
+  size_t step = 1;
 
   while ((read = getline(&line, &len, f)) != -1) {
     if (line[0] == 'v' && line[1] == ' ') {
@@ -20,11 +21,12 @@ void parseObj(const char *filename, modelData *m) {
 
     } else if (line[0] == 'f' && line[1] == ' ') {
       size_t i = 2;
-      size_t size = countSize(line + i);
-      size_t face = 0;
+      /* size_t size = countSize(line + i); */
       while (line[i] != '\0') {
-        face = toInt(line + i, &i);
-        faces.push_back(face);
+        size_t face = toInt(line + i, &i);
+        if (step == 1 && line[i] == '/')
+          step = 3;
+        indexes.push_back(face);
         i++;
       }
       m->faceNumber++;
@@ -33,10 +35,27 @@ void parseObj(const char *filename, modelData *m) {
     }
   }
 
-  for (size_t i = 0; i < faces.size(); i++) {
-    glm::vec3 v = noSortVert[faces[i] - 1];
+  /* for (size_t i = 0; i < noSortVert.size(); i++) { */
+  /*   printf("%f %f %f\n", noSortVert[i].x, noSortVert[i].y, noSortVert[i].z); */
+  /* } */
+
+  /* for (size_t i = 0, n = 0; i < indexes.size(); i++) { */
+  /*   printf("%zu ", indexes[i]); */
+  /* } */
+  /* printf("\n"); */
+
+  /* printf("step = %zu\n", step); */
+
+  for (size_t i = 0; i < indexes.size(); i += step) {
+    glm::vec3 v = noSortVert[indexes[i] - 1];
     m->vertexArray.push_back(v);
   }
+
+  printf("----------------------------------------------\n");
+
+  /* for (size_t i = 0; i < m->vertexArray.size(); i++) { */
+  /*   printf("%f %f %f\n", m->vertexArray[i].x, m->vertexArray[i].y, m->vertexArray[i].z); */
+  /* } */
 
   if (line) free(line);
   fclose(f);
@@ -100,3 +119,9 @@ size_t nameSize(char *line) {
   while (isalpha(*line++)) l++;
   return l;
 }
+
+/* int main() { */
+/*   modelData m; */
+/*   parseObj("../models/cube.obj", &m); */
+/*   return 0; */
+/* } */

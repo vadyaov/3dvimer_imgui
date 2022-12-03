@@ -13,9 +13,24 @@ static void glfw_error_callback(int error, const char* description) {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+// closing window by pressing ESC
 static void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
+}
+
+static void startFrame() {
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+}
+
+static void render(ImVec4 &clear_color, GLFWwindow* window) {
+  ImGui::Render();
+  int display_w, display_h;
+  glfwGetFramebufferSize(window, &display_w, &display_h);
+  glViewport(0, 0, display_w, display_h);
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 std::string getFilename(std::string& path) {
@@ -135,51 +150,56 @@ int main(int, char**) {
     std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl;
   }
 
+  glUseProgram(shaderProgram);
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
 
   /*------------------------------------------------------------------*/
 
-  float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
-  };
-
-  unsigned int VBO, VAO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-
-  glBindVertexArray(VAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
-
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
-  
-  /* glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); */
+  modelData m;
+  std::string path = "models/cube.obj";
+  parseObj(path.c_str(), &m);
 
   std::string filename, modelname;
   const char *filenamePtr = filename.c_str();
   const char *modelnamePtr = modelname.c_str();
 
-  modelData m;
-  std::string path = "models/diamond.obj";
-  parseObj(path.c_str(), &m);
+  std::cout << "SMOTRIM!" << std::endl;
+  for (glm::vec3 i : m.vertexArray)
+    std::cout << i.x << " " << i.y << " " << i.z << " " << std::endl;
+
+  GLuint VAO;
+  glGenVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);
+
+  GLuint vertexVBO;
+  glGenBuffers(1, &vertexVBO);
+
+  /* think about why it need to be in while main loop, mb because new coord after
+   * movements and rotation must be copied again to this vbo */
+
+    // copy vertexes to vertexVBO
+    glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+    glBufferData(GL_ARRAY_BUFFER, m.vertexArray.size() * sizeof(glm::vec3), &m.vertexArray[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    /* glBindBuffer(GL_ARRAY_BUFFER, vertexVBO); */
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+  /* glBindBuffer(GL_ARRAY_BUFFER, 0); // unbind */
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
-    // Poll and handle events (inputs, window resize, etc.)
+    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
+               clear_color.z * clear_color.w, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     processInput(window);
 
     // Start the Dear Imgui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+    startFrame();
+
+    glDrawArrays(GL_TRIANGLES, 0, m.vertexArray.size());
 
     {
       ImGui::Begin("Settings");
@@ -196,11 +216,15 @@ int main(int, char**) {
     }
 
     fileDialog.Display();
+
     if (fileDialog.HasSelected()) {
       filename = fileDialog.GetSelected().string();
       filenamePtr = filename.c_str();
 
       m.vertexArray.clear();
+      if (m.name) free(m.name);
+      m.vertexNumber = 0;
+      m.faceNumber = 0;
 
       parseObj(filenamePtr, &m);
 
@@ -213,33 +237,22 @@ int main(int, char**) {
     }
 
     // Rendering
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
-                 clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    glUseProgram(shaderProgram);
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBindVertexArray(0);
+    render(clear_color, window);
 
     glfwSwapBuffers(window);
+    // Poll and handle events (inputs, window resize, etc.)
     glfwPollEvents();
   }
-
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  glDeleteProgram(shaderProgram);
+  // GL_POINTS, GL_TRIANGLES, GL_LINE_STRIP --> primitives //
 
   // Cleanup
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
+
+  glDeleteBuffers(1, &vertexVBO);
+  glDeleteProgram(shaderProgram);
+  glDeleteVertexArrays(1, &VAO);
 
   glfwDestroyWindow(window);
   glfwTerminate();
