@@ -6,7 +6,11 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
-#include "parseobj/parseobj.hpp"
+extern "C" {
+#include "parseobj/parseobj.h"
+}
+#include "shaders/glshader.hpp"
+#include "affinity/affinity.hpp"
 #include <iostream>
 
 static void glfw_error_callback(int error, const char* description) {
@@ -27,9 +31,10 @@ static void startFrame() {
 
 static void render(ImVec4 &clear_color, GLFWwindow* window) {
   ImGui::Render();
-  int display_w, display_h;
-  glfwGetFramebufferSize(window, &display_w, &display_h);
-  glViewport(0, 0, display_w, display_h);
+  // changing model when resize window
+  /* int display_w, display_h; */
+  /* glfwGetFramebufferSize(window, &display_w, &display_h); */
+  /* glViewport(0, 0, display_w, display_h); */
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
@@ -42,17 +47,6 @@ int main(int, char**) {
   glfwSetErrorCallback(glfw_error_callback);
   if (!glfwInit())
     return 1;
-
-  const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main() {\n"
-    " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
-  const char *fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main() {\n"
-    " FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\0";
 
 #if defined(__APPLE_)
   // GL 3.2 + GLSL 150
@@ -100,73 +94,31 @@ int main(int, char**) {
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
   
+  // Background color
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
 
   // Create fileDialog for choosing .obj
   ImGui::FileBrowser fileDialog;
-  fileDialog.SetTitle("Choose any model");
+  fileDialog.SetTitle("Choose model");
   fileDialog.SetTypeFilters({".obj"});
 
-
-  /*---------------------------SHADERS------------------------------*/
-
-  unsigned int vertexShader;
-  vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-  glCompileShader(vertexShader);
-
-  int success_v;
-  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success_v);
-  if (!success_v) {
-    char infoLog[512];
-    glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-  }
-
-  unsigned int fragmentShader;
-  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-  glCompileShader(fragmentShader);
-
-  int success_f;
-  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success_f);
-  if (!success_f) {
-    char infoLog[512];
-    glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::INDEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-  }
-
-  unsigned int shaderProgram;
-  shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-
-  int success_p;
-  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success_p);
-  if (!success_p) {
-    char infoLog[512];
-    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n" << infoLog << std::endl;
-  }
-
+  GLuint shaderProgram = LoadShader("shaders/versh.glsl", "shaders/fragm.glsl");
   glUseProgram(shaderProgram);
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
 
-  /*------------------------------------------------------------------*/
-
-  modelData m;
+  model m;
   std::string path = "models/cube.obj";
-  parseObj(path.c_str(), &m);
+  parseobj(path.c_str(), &m);
 
   std::string filename, modelname;
   const char *filenamePtr = filename.c_str();
   const char *modelnamePtr = modelname.c_str();
 
   std::cout << "SMOTRIM!" << std::endl;
-  for (glm::vec3 i : m.vertexArray)
-    std::cout << i.x << " " << i.y << " " << i.z << " " << std::endl;
+  for (size_t i = 0; i < m.indexNumber * 3 * 3; i += 3)
+    printf("%f %f %f\n", m.vertexArray[i], m.vertexArray[i + 1], m.vertexArray[i + 2]);
 
   GLuint VAO;
   glGenVertexArrays(1, &VAO);
@@ -180,7 +132,7 @@ int main(int, char**) {
 
     // copy vertexes to vertexVBO
     glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
-    glBufferData(GL_ARRAY_BUFFER, m.vertexArray.size() * sizeof(glm::vec3), &m.vertexArray[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, m.indexNumber * 3 * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     /* glBindBuffer(GL_ARRAY_BUFFER, vertexVBO); */
@@ -199,7 +151,8 @@ int main(int, char**) {
     // Start the Dear Imgui frame
     startFrame();
 
-    glDrawArrays(GL_TRIANGLES, 0, m.vertexArray.size());
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, m.indexNumber * 3  * 3);
 
     {
       ImGui::Begin("Settings");
@@ -221,12 +174,12 @@ int main(int, char**) {
       filename = fileDialog.GetSelected().string();
       filenamePtr = filename.c_str();
 
-      m.vertexArray.clear();
+      free(m.vertexArray);
       if (m.name) free(m.name);
       m.vertexNumber = 0;
-      m.faceNumber = 0;
+      m.indexNumber = 0;
 
-      parseObj(filenamePtr, &m);
+      parseobj(filenamePtr, &m);
 
       modelname = m.name;
       modelnamePtr = modelname.c_str();

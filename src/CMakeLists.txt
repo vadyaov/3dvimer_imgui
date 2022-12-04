@@ -9,10 +9,13 @@ set(APP_VERSION_MINOR 0)
 
 set(APP_TARGET vimerApp.app)
 
-add_subdirectory(imgui parseobj)
+add_subdirectory(imgui)
+add_subdirectory(parseobj)
+add_subdirectory(shaders)
+add_subdirectory(affinity)
 include_directories(${PROJECT_SOURCE_DIR})
-add_executable(${APP_TARGET} main.cpp parseobj/parseobj.cpp)
-target_link_libraries(${APP_TARGET} imgui)
+add_executable(${APP_TARGET} main.cpp)
+target_link_libraries(${APP_TARGET} imgui parseobj shader affinity)
 
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
