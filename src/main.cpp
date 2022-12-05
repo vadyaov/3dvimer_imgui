@@ -13,6 +13,10 @@ extern "C" {
 #include "affinity/affinity.hpp"
 #include <iostream>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 static void glfw_error_callback(int error, const char* description) {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
@@ -120,6 +124,17 @@ int main(int, char**) {
   for (size_t i = 0; i < m.indexNumber * 3 * 3; i += 3)
     printf("%f %f %f\n", m.vertexArray[i], m.vertexArray[i + 1], m.vertexArray[i + 2]);
 
+  /* glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f); */
+  /* glm::mat4 trans = glm::mat4(1.0f); */
+  /* trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0)); */
+  /* trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5)); */
+  /* vec = trans * vec; */
+  /* std::cout << vec.x << vec.y << vec.z << std::endl; */
+
+  /* GLuint transformLoc = glGetUniformLocation(shaderProgram, "transform"); */
+  /* glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); */
+
+
   GLuint VAO;
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
@@ -151,8 +166,20 @@ int main(int, char**) {
     // Start the Dear Imgui frame
     startFrame();
 
+  glm::mat4 model = glm::mat4(1.0f);
+  glm::mat4 view = glm::mat4(1.0f);
+  glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
+  model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
+  GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+  GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+  GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, m.indexNumber * 3  * 3);
+    glDrawArrays(GL_LINE_STRIP, 0, m.indexNumber * 3  * 3);
 
     {
       ImGui::Begin("Settings");

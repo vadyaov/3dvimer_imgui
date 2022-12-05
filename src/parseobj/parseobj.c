@@ -15,14 +15,14 @@ void parseobj(const char *filename, model *m) {
   int indexes[f_size];
 
   parse(file, vertices, indexes);
-/*  
+
   for (size_t i = 0; i < m->vertexNumber * 3; i++)
     printf("%f ", vertices[i]);
 
   printf("\n");
   for (size_t j = 0; j < m->indexNumber * 3; j++)
     printf("%d ", indexes[j]);
-*/
+    
   m->vertexArray = calloc(f_size * 3, sizeof(float));
   for (size_t i = 0, k = 0; k < f_size; i += 3, k++) {
     for (size_t j = 0; j < 3; j++) {
