@@ -17,6 +17,6 @@ typedef struct {
 void parseobj(const char *filename, model *m);
 void initModel(model *m);
 void count(FILE *file, size_t * vertexNumber, size_t *indexNumber);
-void parse(FILE *file, float *, int *);
+int* parse(FILE *file, float *, int *, size_t *);
 int toInt(char *src, size_t *i);
 size_t spaceNum(char *line);

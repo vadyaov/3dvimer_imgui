@@ -8,39 +8,43 @@ void parseobj(const char *filename, model *m) {
 
   printf("v:%zu\tf:%zu\n", m->vertexNumber, m->indexNumber);
 
-  size_t v_size = m->vertexNumber * 3;
-  size_t f_size = m->indexNumber * 3;
+  size_t v_size = 3 * m->vertexNumber;
+  size_t f_size = 0;
   
   printf("v_size:%zu\tf_size:%zu\n", v_size, f_size);
 
   float *vertices = (float *)calloc(v_size, sizeof(float));
   int *indexes = NULL;
 
-  parse(file, vertices, indexes);
+  indexes = parse(file, vertices, indexes, &f_size);
 
   for (size_t i = 0; i < m->vertexNumber * 3; i++)
     printf("%f ", vertices[i]);
 
   printf("\n");
-  /* for (size_t j = 0; j < m->indexNumber * 3; j++) */
-  /*   printf("%d ", indexes[j]); */
-    
-  m->vertexArray = calloc(f_size * 3, sizeof(float));
-  /* for (size_t i = 0, k = 0; k < f_size; i += 3, k++) { */
-  /*   for (size_t j = 0; j < 3; j++) { */
-  /*     m->vertexArray[i + j] = vertices[(indexes[k] - 1) * 3 + j]; */
-  /*   } */
-  /* } */
+  for (size_t j = 0; j < f_size; j++)
+    printf("%d ", indexes[j]);
 
-  /* for (size_t i = 0, j = 0; i < f_size * 3; i++) { */
-  /*   printf("%f ", m->vertexArray[i]); */
-  /*   j++; */
-  /*   if (j == 3) { */
-  /*     printf("\n"); */
-  /*     j = 0; */
-  /*   } */
-  /* } */
+  printf("\n");
+    
+  m->vertexArray = (float *)calloc(f_size * 3, sizeof(float));
+  for (size_t i = 0, k = 0; k < f_size; i += 3, k++) {
+    for (size_t j = 0; j < 3; j++) {
+      m->vertexArray[i + j] = vertices[(indexes[k] - 1) * 3 + j];
+    }
+  }
+
+  for (size_t i = 0, j = 0; i < f_size * 3; i++) {
+    printf("%f ", m->vertexArray[i]);
+    j++;
+    if (j == 3) {
+      printf("\n");
+      j = 0;
+    }
+  }
+
   free(vertices);
+  free(indexes);
   fclose(file);
 }
 
@@ -64,11 +68,11 @@ void count(FILE *file, size_t *vertexNumber, size_t *indexNumber) {
   fseek(file, 0, SEEK_SET);
 }
 
-void parse(FILE *file, float *v, int *f) {
+ /* ONLY 3 or 4 idx in one face! */
+int* parse(FILE *file, float *v, int *f, size_t *f_size) {
   char *line = NULL;
   size_t len = 0;
   size_t i = 0, j = 0;
-  size_t index_size = 0;
 
   while (getline(&line, &len, file) != -1) {
     if (line[0] == 'v' && line[1] == ' ') {
@@ -76,24 +80,34 @@ void parse(FILE *file, float *v, int *f) {
       printf("Hello!\n");
       i += 3;
     } else if (line[0] == 'f' && line[1] == ' ') {
-      index_size += spaceNum(line + 2) + 1;
-      f = (int *)realloc(f, index_size);
       size_t k = 2;
+      size_t spcs = spaceNum(line + k);
+
+      *f_size += spcs == 3 ? spcs * 2 : spcs + 1;
+      printf("index_size = %zu\n", *f_size);
+      f = (int *)realloc(f, *f_size * sizeof(int));
+
       while (line[k] != '\0') {
         f[j++] = toInt(line + k, &k);
-        /* printf("k = %zu\n%s\n", k, line + k); */
         while (line[k] != ' ' && line[k] != '\0')
           k++;
         if (line[k] == '\0') k--;
         k++;
       }
+
+      if (spcs == 3) {
+        /* f[j] = f[j - 4]; */
+        /* j++; */
+        /* f[j] = f[j - 3]; */
+        /* j++; */
+        for(int l = 4; l > 2; l--, j++)
+          f[j] = f[j - l];
+      }
+
     }
   }
-
   if (line) free(line);
-  printf("ALALLALA\n");
-  /* for (size_t k = 0; k < 18; k++) */
-  /*   printf("%f:", v[k]); */
+  return f;
 }
 
 size_t spaceNum(char *line) {
@@ -118,9 +132,9 @@ int toInt(char *src, size_t *i) {
   return res;
 }
 
-int main() {
-  model m;
-  parseobj("../models/prism.obj", &m);
-  free(m.vertexArray);
-  return 0;
-}
+/* int main() { */
+/*   model m; */
+/*   parseobj("../models/cube.obj", &m); */
+/*   free(m.vertexArray); */
+/*   return 0; */
+/* } */

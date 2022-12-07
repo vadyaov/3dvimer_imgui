@@ -120,10 +120,6 @@ int main(int, char**) {
   const char *filenamePtr = filename.c_str();
   const char *modelnamePtr = modelname.c_str();
 
-  std::cout << "SMOTRIM!" << std::endl;
-  for (size_t i = 0; i < m.indexNumber * 3 * 3; i += 3)
-    printf("%f %f %f\n", m.vertexArray[i], m.vertexArray[i + 1], m.vertexArray[i + 2]);
-
   /* glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f); */
   /* glm::mat4 trans = glm::mat4(1.0f); */
   /* trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0)); */
@@ -169,8 +165,8 @@ int main(int, char**) {
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view = glm::mat4(1.0f);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-  model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
+  model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -20.0f));
   GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
   GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
@@ -179,7 +175,7 @@ int main(int, char**) {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindVertexArray(VAO);
-    glDrawArrays(GL_LINE_STRIP, 0, m.indexNumber * 3  * 3);
+    glDrawArrays(GL_TRIANGLES, 0, m.indexNumber * 3  * 3);
 
     {
       ImGui::Begin("Settings");
