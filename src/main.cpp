@@ -113,7 +113,7 @@ int main(int, char**) {
   glUseProgram(shaderProgram);
 
   model m;
-  std::string path = "models/cube.obj";
+  std::string path = "models/prism.obj";
   parseobj(path.c_str(), &m);
 
   std::string filename, modelname;

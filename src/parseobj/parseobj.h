@@ -1,5 +1,6 @@
 #pragma once
 
+#define  _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,3 +19,4 @@ void initModel(model *m);
 void count(FILE *file, size_t * vertexNumber, size_t *indexNumber);
 void parse(FILE *file, float *, int *);
 int toInt(char *src, size_t *i);
+size_t spaceNum(char *line);
