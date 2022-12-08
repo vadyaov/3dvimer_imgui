@@ -110,26 +110,17 @@ int main(int, char**) {
   fileDialog.SetTypeFilters({".obj"});
 
   GLuint shaderProgram = LoadShader("shaders/versh.glsl", "shaders/fragm.glsl");
-  glUseProgram(shaderProgram);
 
   model m;
-  std::string path = "models/prism.obj";
-  parseobj(path.c_str(), &m);
+  std::string path = "models/cube.obj";
 
-  std::string filename, modelname;
+  size_t indexNum = parseobj(path.c_str(), &m);
+  printf("NAME: %s\n", m.name);
+
+  std::string filename = getFilename(path), modelname = m.name;
+  if (m.name) free(m.name);
   const char *filenamePtr = filename.c_str();
   const char *modelnamePtr = modelname.c_str();
-
-  /* glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f); */
-  /* glm::mat4 trans = glm::mat4(1.0f); */
-  /* trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0)); */
-  /* trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5)); */
-  /* vec = trans * vec; */
-  /* std::cout << vec.x << vec.y << vec.z << std::endl; */
-
-  /* GLuint transformLoc = glGetUniformLocation(shaderProgram, "transform"); */
-  /* glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); */
-
 
   GLuint VAO;
   glGenVertexArrays(1, &VAO);
@@ -141,16 +132,6 @@ int main(int, char**) {
   /* think about why it need to be in while main loop, mb because new coord after
    * movements and rotation must be copied again to this vbo */
 
-    // copy vertexes to vertexVBO
-    glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
-    glBufferData(GL_ARRAY_BUFFER, m.indexNumber * 3 * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    /* glBindBuffer(GL_ARRAY_BUFFER, vertexVBO); */
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-  /* glBindBuffer(GL_ARRAY_BUFFER, 0); // unbind */
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
@@ -161,12 +142,16 @@ int main(int, char**) {
 
     // Start the Dear Imgui frame
     startFrame();
+    glUseProgram(shaderProgram);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+    glBufferData(GL_ARRAY_BUFFER, indexNum * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
 
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view = glm::mat4(1.0f);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-  model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -20.0f));
+  model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
   GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
   GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
@@ -174,8 +159,15 @@ int main(int, char**) {
   GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
+    glEnableVertexAttribArray(0);
+    /* glBindBuffer(GL_ARRAY_BUFFER, vertexVBO); */
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, m.indexNumber * 3  * 3);
+    glDrawArrays(GL_TRIANGLES, 0, indexNum * 3);
+
+    glDisableVertexAttribArray(0);
 
     {
       ImGui::Begin("Settings");
@@ -194,17 +186,19 @@ int main(int, char**) {
     fileDialog.Display();
 
     if (fileDialog.HasSelected()) {
-      filename = fileDialog.GetSelected().string();
-      filenamePtr = filename.c_str();
+      path = fileDialog.GetSelected().string();
+      std::cout << "PATH: " << path << std::endl;
 
       free(m.vertexArray);
       if (m.name) free(m.name);
-      m.vertexNumber = 0;
-      m.indexNumber = 0;
 
-      parseobj(filenamePtr, &m);
+      indexNum = parseobj(path.c_str(), &m);
+      std::cout << "indexNum:" << indexNum << std::endl;
+      std::cout << m.name << std::endl;
 
       modelname = m.name;
+      filename = getFilename(path);
+      std::cout << "fileName:" << filename << std::endl;
       modelnamePtr = modelname.c_str();
 
       filename = getFilename(filename);

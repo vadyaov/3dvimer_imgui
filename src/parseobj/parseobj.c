@@ -1,7 +1,8 @@
 #include "parseobj.h"
 
-void parseobj(const char *filename, model *m) {
+size_t parseobj(const char *filename, model *m) {
   initModel(m);
+  printf("filename:%s\n", filename);
   FILE *file = fopen(filename, "r");
 
   count(file, &m->vertexNumber, &m->indexNumber);
@@ -16,7 +17,9 @@ void parseobj(const char *filename, model *m) {
   float *vertices = (float *)calloc(v_size, sizeof(float));
   int *indexes = NULL;
 
-  indexes = parse(file, vertices, indexes, &f_size);
+  indexes = parse(file, vertices, indexes, &f_size, &m->name);
+
+  printf("v_size:%zu\tf_size:%zu\n", v_size, f_size);
 
   for (size_t i = 0; i < m->vertexNumber * 3; i++)
     printf("%f ", vertices[i]);
@@ -46,6 +49,7 @@ void parseobj(const char *filename, model *m) {
   free(vertices);
   free(indexes);
   fclose(file);
+  return f_size;
 }
 
 void initModel(model *m) {
@@ -69,7 +73,7 @@ void count(FILE *file, size_t *vertexNumber, size_t *indexNumber) {
 }
 
  /* ONLY 3 or 4 idx in one face! */
-int* parse(FILE *file, float *v, int *f, size_t *f_size) {
+int* parse(FILE *file, float *v, int *f, size_t *f_size, char** name) {
   char *line = NULL;
   size_t len = 0;
   size_t i = 0, j = 0;
@@ -104,10 +108,29 @@ int* parse(FILE *file, float *v, int *f, size_t *f_size) {
           f[j] = f[j - l];
       }
 
+    } else if (line[0] == 'o' && line[1] == ' ') {
+      loadObjectName(line, name);
     }
   }
   if (line) free(line);
   return f;
+}
+
+void loadObjectName(char *line, char **name) {
+  if (NULL == *name) {
+    size_t length = nameSize(line + 2);
+    *name = (char *)calloc(length + 1, sizeof(char));
+    if (*name) {
+      *name = strncpy(*name, line + 2, length);
+      (*name)[length] = '\0';
+    }
+  }
+}
+
+size_t nameSize(char *line) {
+  size_t l = 0;
+  while (isalpha(*line++)) l++;
+  return l;
 }
 
 size_t spaceNum(char *line) {
