@@ -9,6 +9,7 @@ set(APP_VERSION_MINOR 0)
 
 set(APP_TARGET vimerApp.app)
 
+
 add_subdirectory(imgui)
 add_subdirectory(parseobj)
 add_subdirectory(shaders)

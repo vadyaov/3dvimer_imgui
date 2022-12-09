@@ -1,8 +1,7 @@
 #include "parseobj.h"
 
-size_t parseobj(const char *filename, model *m) {
+void parseobj(const char *filename, model *m) {
   initModel(m);
-  printf("filename:%s\n", filename);
   FILE *file = fopen(filename, "r");
 
   count(file, &m->vertexNumber, &m->indexNumber);
@@ -10,34 +9,30 @@ size_t parseobj(const char *filename, model *m) {
   printf("v:%zu\tf:%zu\n", m->vertexNumber, m->indexNumber);
 
   size_t v_size = 3 * m->vertexNumber;
-  size_t f_size = 0;
   
-  printf("v_size:%zu\tf_size:%zu\n", v_size, f_size);
-
   float *vertices = (float *)calloc(v_size, sizeof(float));
   int *indexes = NULL;
 
-  indexes = parse(file, vertices, indexes, &f_size, &m->name);
+  indexes = parse(file, vertices, indexes, &m->allIndex, &m->name);
 
-  printf("v_size:%zu\tf_size:%zu\n", v_size, f_size);
+  printf("v_size:%zu\tf_size:%zu\n-----VERTICES-----\n", v_size, m->allIndex);
 
   for (size_t i = 0; i < m->vertexNumber * 3; i++)
     printf("%f ", vertices[i]);
 
-  printf("\n");
-  for (size_t j = 0; j < f_size; j++)
+  printf("\n-----FACES-----\n");
+  for (size_t j = 0; j < m->allIndex; j++)
     printf("%d ", indexes[j]);
 
-  printf("\n");
-    
-  m->vertexArray = (float *)calloc(f_size * 3, sizeof(float));
-  for (size_t i = 0, k = 0; k < f_size; i += 3, k++) {
+  printf("\n-----AFTER INDEXING-----\n");
+  m->vertexArray = (float *)calloc(m->allIndex * 3, sizeof(float));
+  for (size_t i = 0, k = 0; k < m->allIndex; i += 3, k++) {
     for (size_t j = 0; j < 3; j++) {
       m->vertexArray[i + j] = vertices[(indexes[k] - 1) * 3 + j];
     }
   }
 
-  for (size_t i = 0, j = 0; i < f_size * 3; i++) {
+  for (size_t i = 0, j = 0; i < m->allIndex * 3; i++) {
     printf("%f ", m->vertexArray[i]);
     j++;
     if (j == 3) {
@@ -49,7 +44,6 @@ size_t parseobj(const char *filename, model *m) {
   free(vertices);
   free(indexes);
   fclose(file);
-  return f_size;
 }
 
 void initModel(model *m) {
@@ -57,6 +51,7 @@ void initModel(model *m) {
   m->name = NULL;
   m->vertexNumber = 0;
   m->indexNumber = 0;
+  m->allIndex = 0;
 }
 
 void count(FILE *file, size_t *vertexNumber, size_t *indexNumber) {
@@ -81,16 +76,14 @@ int* parse(FILE *file, float *v, int *f, size_t *f_size, char** name) {
   while (getline(&line, &len, file) != -1) {
     if (line[0] == 'v' && line[1] == ' ') {
       sscanf(line + 2, "%f %f %f", v + i, v + i + 1, v + i + 2);
-      printf("Hello!\n");
       i += 3;
     } else if (line[0] == 'f' && line[1] == ' ') {
       size_t k = 2;
       size_t spcs = spaceNum(line + k);
 
       *f_size += spcs == 3 ? spcs * 2 : spcs + 1;
-      printf("index_size = %zu\n", *f_size);
-      f = (int *)realloc(f, *f_size * sizeof(int));
 
+      f = (int *)realloc(f, *f_size * sizeof(int));
       while (line[k] != '\0') {
         f[j++] = toInt(line + k, &k);
         while (line[k] != ' ' && line[k] != '\0')

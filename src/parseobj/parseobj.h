@@ -15,9 +15,10 @@ typedef struct {
   char *name;
   size_t vertexNumber;
   size_t indexNumber;
+  size_t allIndex;
 } model;
 
-size_t parseobj(const char *filename, model *m);
+void parseobj(const char *filename, model *m);
 void initModel(model *m);
 void count(FILE *file, size_t * vertexNumber, size_t *indexNumber);
 int* parse(FILE *file, float *, int *, size_t *, char **);

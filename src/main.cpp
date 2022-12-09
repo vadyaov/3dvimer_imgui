@@ -2,20 +2,25 @@
 #include "imgui/imfilebrowser.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
-#define GL_SILENCE_DEPRECATION
+
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
+
 extern "C" {
 #include "parseobj/parseobj.h"
+#include "affinity/affinity.h"
 }
+
 #include "shaders/glshader.hpp"
-#include "affinity/affinity.hpp"
+#include "affinity/affinity.h"
 #include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#define GL_SILENCE_DEPRECATION
 
 static void glfw_error_callback(int error, const char* description) {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -114,13 +119,7 @@ int main(int, char**) {
   model m;
   std::string path = "models/cube.obj";
 
-  size_t indexNum = parseobj(path.c_str(), &m);
-  printf("NAME: %s\n", m.name);
-
-  std::string filename = getFilename(path), modelname = m.name;
-  if (m.name) free(m.name);
-  const char *filenamePtr = filename.c_str();
-  const char *modelnamePtr = modelname.c_str();
+  parseobj(path.c_str(), &m);
 
   GLuint VAO;
   glGenVertexArrays(1, &VAO);
@@ -128,10 +127,6 @@ int main(int, char**) {
 
   GLuint vertexVBO;
   glGenBuffers(1, &vertexVBO);
-
-  /* think about why it need to be in while main loop, mb because new coord after
-   * movements and rotation must be copied again to this vbo */
-
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
@@ -145,19 +140,19 @@ int main(int, char**) {
     glUseProgram(shaderProgram);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
-    glBufferData(GL_ARRAY_BUFFER, indexNum * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, m.allIndex * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
 
-  glm::mat4 model = glm::mat4(1.0f);
-  glm::mat4 view = glm::mat4(1.0f);
-  glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-  model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
-  GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-  GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
-  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-  GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
+    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
+    GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glEnableVertexAttribArray(0);
     /* glBindBuffer(GL_ARRAY_BUFFER, vertexVBO); */
@@ -165,7 +160,7 @@ int main(int, char**) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, indexNum * 3);
+    glDrawArrays(GL_TRIANGLES, 0, m.allIndex * 3);
 
     glDisableVertexAttribArray(0);
 
@@ -173,12 +168,18 @@ int main(int, char**) {
       ImGui::Begin("Settings");
       if (ImGui::Button("Browse obj"))
         fileDialog.Open();
-      ImGui::Text("File: ");
-      ImGui::SameLine();
-      ImGui::Text(filenamePtr);
-      ImGui::Text("Model: ");
-      ImGui::SameLine();
-      ImGui::Text(modelnamePtr);
+      /* ImGui::Text("File: "); */
+      /* ImGui::SameLine(); */
+      /* ImGui::Text(filenamePtr); */
+      /* ImGui::Text("Model: "); */
+      /* ImGui::SameLine(); */
+      /* ImGui::Text(modelnamePtr); */
+      if (ImGui::Button("Move")) {
+        move(&m, 1, 0, 0);
+      }
+      if (ImGui::Button("Scale")) {
+        scale(&m, 1.2, 1.0, 1.0);
+      }
       ImGui::ColorEdit3("back color", (float*)&clear_color);
       ImGui::End();
     }
@@ -187,21 +188,11 @@ int main(int, char**) {
 
     if (fileDialog.HasSelected()) {
       path = fileDialog.GetSelected().string();
-      std::cout << "PATH: " << path << std::endl;
 
       free(m.vertexArray);
       if (m.name) free(m.name);
 
-      indexNum = parseobj(path.c_str(), &m);
-      std::cout << "indexNum:" << indexNum << std::endl;
-      std::cout << m.name << std::endl;
-
-      modelname = m.name;
-      filename = getFilename(path);
-      std::cout << "fileName:" << filename << std::endl;
-      modelnamePtr = modelname.c_str();
-
-      filename = getFilename(filename);
+      parseobj(path.c_str(), &m);
 
       fileDialog.ClearSelected();
     }
