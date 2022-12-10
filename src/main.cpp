@@ -118,9 +118,11 @@ int main(int, char**) {
   fileDialog.SetTypeFilters({".obj"});
 
   GLuint shaderProgram = LoadShader("shaders/versh.glsl", "shaders/fragm.glsl");
+  int vertexColorLocation = glGetUniformLocation(shaderProgram, "my_color");
+  glUseProgram(shaderProgram);
 
   model m;
-  std::string path = "models/cube.obj";
+  std::string path = "models/prism.obj";
   std::string filename = getFilename(path);
   const char *filenamePtr = filename.c_str();
   float zoom = 10.0f;
@@ -139,6 +141,9 @@ int main(int, char**) {
   GLuint vertexVBO;
   glGenBuffers(1, &vertexVBO);
 
+  GLuint linesVBO;
+  glGenBuffers(1, &linesVBO);
+
   // Main loop
   while (!glfwWindowShouldClose(window)) {
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
@@ -146,12 +151,15 @@ int main(int, char**) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     processInput(window);
 
+
     // Start the Dear Imgui frame
     startFrame();
-    glUseProgram(shaderProgram);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
     glBufferData(GL_ARRAY_BUFFER, m.allIndex * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, linesVBO);
+    glBufferData(GL_ARRAY_BUFFER, m.lineIndex * 3 * sizeof(float), &m.linesArray[0], GL_STATIC_DRAW);
 
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
@@ -165,16 +173,25 @@ int main(int, char**) {
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    
+    glUniform4f(vertexColorLocation, vertex_color.x, vertex_color.y, vertex_color.z, vertex_color.w);
 
     glEnableVertexAttribArray(0);
-    /* glBindBuffer(GL_ARRAY_BUFFER, vertexVBO); */
-
+    glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, m.allIndex * 3);
 
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, linesVBO);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_LINES, 0, m.lineIndex * 3);
+
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 
     {
       ImGui::Begin("Settings");
@@ -182,7 +199,7 @@ int main(int, char**) {
         fileDialog.Open();
       ImGui::Text("File:%s", filenamePtr);
       ImGui::Text("Model:%s", modelnamePtr);
-      ImGui::SliderFloat("Zoom", &zoom, 50.0f, 5.0f);
+      ImGui::SliderFloat("Zoom", &zoom, 80.0f, 5.0f);
       ImGui::InputFloat("Scale coef", &addScale, 0.01f, 1.0f, "%.3f");
       if (ImGui::Button("ScaleX"))
         scale(&m, scaleX + addScale, scaleY, scaleZ);
@@ -196,6 +213,7 @@ int main(int, char**) {
       if (ImGui::Button("Reset Scale"))
         parseobj(path.c_str(), &m);
       ImGui::ColorEdit3("Background color", (float*)&clear_color);
+      ImGui::ColorEdit3("Vertex color", (float*)&vertex_color);
       ImGui::End();
     }
 
@@ -208,6 +226,7 @@ int main(int, char**) {
       filenamePtr = filename.c_str();
 
       free(m.vertexArray);
+      free(m.linesArray);
       if (m.name) free(m.name);
 
       parseobj(path.c_str(), &m);
