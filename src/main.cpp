@@ -106,6 +106,9 @@ int main(int, char**) {
   // Background color
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+  // Verteces Color
+  ImVec4 vertex_color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
 
@@ -118,8 +121,16 @@ int main(int, char**) {
 
   model m;
   std::string path = "models/cube.obj";
+  std::string filename = getFilename(path);
+  const char *filenamePtr = filename.c_str();
+  float zoom = 10.0f;
+  float scaleX = 1.0, scaleY = 1.0, scaleZ = 1.0;
+  float addScale = 0.0f;
 
   parseobj(path.c_str(), &m);
+
+  const char *modelnamePtr = NULL;
+  if (m.name != NULL) modelnamePtr = m.name;
 
   GLuint VAO;
   glGenVertexArrays(1, &VAO);
@@ -145,8 +156,9 @@ int main(int, char**) {
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
+    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.7f, 0.0f));
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -zoom));
+
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
@@ -168,31 +180,39 @@ int main(int, char**) {
       ImGui::Begin("Settings");
       if (ImGui::Button("Browse obj"))
         fileDialog.Open();
-      /* ImGui::Text("File: "); */
-      /* ImGui::SameLine(); */
-      /* ImGui::Text(filenamePtr); */
-      /* ImGui::Text("Model: "); */
-      /* ImGui::SameLine(); */
-      /* ImGui::Text(modelnamePtr); */
-      if (ImGui::Button("Move")) {
-        move(&m, 1, 0, 0);
-      }
-      if (ImGui::Button("Scale")) {
-        scale(&m, 1.2, 1.0, 1.0);
-      }
-      ImGui::ColorEdit3("back color", (float*)&clear_color);
+      ImGui::Text("File:%s", filenamePtr);
+      ImGui::Text("Model:%s", modelnamePtr);
+      ImGui::SliderFloat("Zoom", &zoom, 50.0f, 5.0f);
+      ImGui::InputFloat("Scale coef", &addScale, 0.01f, 1.0f, "%.3f");
+      if (ImGui::Button("ScaleX"))
+        scale(&m, scaleX + addScale, scaleY, scaleZ);
+      ImGui::SameLine();
+      if (ImGui::Button("ScaleY"))
+        scale(&m, scaleX, scaleY + addScale, scaleZ);
+      ImGui::SameLine();
+      if (ImGui::Button("ScaleZ"))
+        scale(&m, scaleX, scaleY, scaleZ + addScale);
+      ImGui::SameLine();
+      if (ImGui::Button("Reset Scale"))
+        parseobj(path.c_str(), &m);
+      ImGui::ColorEdit3("Background color", (float*)&clear_color);
       ImGui::End();
     }
 
     fileDialog.Display();
 
     if (fileDialog.HasSelected()) {
-      path = fileDialog.GetSelected().string();
+      path = fileDialog.GetSelected();
+
+      filename = getFilename(path);
+      filenamePtr = filename.c_str();
 
       free(m.vertexArray);
       if (m.name) free(m.name);
 
       parseobj(path.c_str(), &m);
+
+      modelnamePtr = m.name;
 
       fileDialog.ClearSelected();
     }
@@ -204,7 +224,6 @@ int main(int, char**) {
     // Poll and handle events (inputs, window resize, etc.)
     glfwPollEvents();
   }
-  // GL_POINTS, GL_TRIANGLES, GL_LINE_STRIP --> primitives //
 
   // Cleanup
   ImGui_ImplOpenGL3_Shutdown();
