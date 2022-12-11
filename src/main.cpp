@@ -109,6 +109,8 @@ int main(int, char**) {
   // Verteces Color
   ImVec4 vertex_color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
+  ImVec4 edge_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
 
@@ -127,7 +129,7 @@ int main(int, char**) {
   const char *filenamePtr = filename.c_str();
   float zoom = 10.0f;
   float scaleX = 1.0, scaleY = 1.0, scaleZ = 1.0;
-  float addScale = 0.0f;
+  float addScale = 0.0f, moveRange = 0.0f, angle = 0.0;
 
   parseobj(path.c_str(), &m);
 
@@ -164,7 +166,7 @@ int main(int, char**) {
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.7f, 0.0f));
+    /* model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.7f, 0.0f)); */
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -zoom));
 
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
@@ -178,20 +180,28 @@ int main(int, char**) {
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, m.allIndex * 3);
 
-    glEnableVertexAttribArray(1);
+    GLuint modelLoc1 = glGetUniformLocation(shaderProgram, "model");
+    glUniformMatrix4fv(modelLoc1, 1, GL_FALSE, glm::value_ptr(model));
+    GLuint viewLoc1 = glGetUniformLocation(shaderProgram, "view");
+    glUniformMatrix4fv(viewLoc1, 1, GL_FALSE, glm::value_ptr(view));
+    GLuint projectionLoc1 = glGetUniformLocation(shaderProgram, "projection");
+    glUniformMatrix4fv(projectionLoc1, 1, GL_FALSE, glm::value_ptr(projection));
+    
+    glUniform4f(vertexColorLocation, edge_color.x, edge_color.y, edge_color.z, edge_color.w);
+
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, linesVBO);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_LINES, 0, m.lineIndex * 3);
 
     glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
 
     {
       ImGui::Begin("Settings");
@@ -199,7 +209,8 @@ int main(int, char**) {
         fileDialog.Open();
       ImGui::Text("File:%s", filenamePtr);
       ImGui::Text("Model:%s", modelnamePtr);
-      ImGui::SliderFloat("Zoom", &zoom, 80.0f, 5.0f);
+      ImGui::SliderFloat("Zoom", &zoom, 100.0f, 5.0f);
+
       ImGui::InputFloat("Scale coef", &addScale, 0.01f, 1.0f, "%.3f");
       if (ImGui::Button("ScaleX"))
         scale(&m, scaleX + addScale, scaleY, scaleZ);
@@ -209,11 +220,30 @@ int main(int, char**) {
       ImGui::SameLine();
       if (ImGui::Button("ScaleZ"))
         scale(&m, scaleX, scaleY, scaleZ + addScale);
+
+      ImGui::SliderFloat("Move range", &moveRange, -5.0f, 5.0f);
+      if (ImGui::Button("MoveX"))
+        move(&m, moveRange, 0, 0);
       ImGui::SameLine();
-      if (ImGui::Button("Reset Scale"))
-        parseobj(path.c_str(), &m);
+      if (ImGui::Button("MoveY"))
+        move(&m, 0, moveRange, 0);
+      ImGui::SameLine();
+      if (ImGui::Button("MoveZ"))
+        move(&m, 0, 0, moveRange);
+
+      ImGui::InputFloat("Angle", &angle, 1.0f, 1.0f, "%.1f");
+      if (ImGui::Button("RotateX"))
+        rotate(&m, angle, 'x');
+      ImGui::SameLine();
+      if (ImGui::Button("RotateY"))
+        rotate(&m, angle, 'y');
+      ImGui::SameLine();
+      if (ImGui::Button("RotateZ"))
+        rotate(&m, angle, 'z');
+
       ImGui::ColorEdit3("Background color", (float*)&clear_color);
       ImGui::ColorEdit3("Vertex color", (float*)&vertex_color);
+      ImGui::ColorEdit3("Edge color", (float*)&edge_color);
       ImGui::End();
     }
 
