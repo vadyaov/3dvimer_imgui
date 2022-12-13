@@ -21,9 +21,9 @@ void parseobj(const char *filename, model *m) {
 /*   for (size_t i = 0; i < m->vertexNumber * 3; i++) */
 /*     printf("%f ", vertices[i]); */
 
-/*   printf("\n-----FACES-----\n"); */
-/*   for (size_t j = 0; j < m->allIndex; j++) */
-/*     printf("%d ", mainIndexArray[j]); */
+  printf("\n-----FACES-----\n");
+  for (size_t j = 0; j < m->allIndex; j++)
+    printf("%d ", mainIndexArray[j]);
 
 /*   printf("\n-----FACES LINES-----\n"); */
 /*   for (size_t j = 0; j < m->lineIndex; j++) */
@@ -104,53 +104,72 @@ void parse(FILE *file, float *v, int **f, int **fl, model *m) {
       sscanf(line + 2, "%f %f %f", v + i, v + i + 1, v + i + 2);
       i += 3;
     } else if (line[0] == 'f' && line[1] == ' ') {
-      size_t k = 2;
+      size_t k = 2, start = j;
       size_t spcs = spaceNum(line + k);
 
-        m->allIndex += spcs == 3 ? 6 : 3;
-        m->lineIndex += spcs == 3 ? 8 : 6;
+      printf("spaces = %zu\nstart = %zu\n", spcs, start);
+
+        m->allIndex += (spcs - 1) * 3;
+        m->lineIndex += (spcs + 1) * 2;
 
         /* printf("all:%zu\tline%zu\n", m->allIndex, m->lineIndex); */
 
         *f = (int *)realloc(*f, m->allIndex * sizeof(int));
         *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
         if (*f && *fl) {
-        while (line[k] != '\0') {
-          (*f)[j] = toInt(line + k, &k);
-          (*fl)[p] = (*f)[j];
-          j++;
-          p++;
-          while (line[k] != ' ' && line[k] != '\0')
+          // write better algh for lines idx
+          while (line[k] != '\0') {
+
+            printf("J = %zu\t j - start = %zu\n", j, j - start);
+            printf("Line:%s\n", line);
+
+            if ((j - start) == 3) {
+              (*f)[j] = (*f)[j - 1];
+              j++;
+            }
+
+            if ((j - start) % 3 == 0 && (j - start) > 5) {
+              (*f)[j] = (*f)[j - 2];
+              j++;
+            }
+
+            (*f)[j] = toInt(line + k, &k);
+            (*fl)[p] = (*f)[j];
+            j++;
+            p++;
+
+            // improve this shit somehow!!!
+            if ((j - start) == 5 || (j - start) == 8 || (j - start) == 11 || (j - start) == 14
+                       || (j - start) == 17 || (j - start) == 20 || (j - start) == 23) {
+              (*f)[j] = (*f)[start];
+              j++;
+            }
+
+            while (line[k] != ' ' && line[k] != '\0')
+              k++;
+            if (line[k] == '\0') k--;
             k++;
-          if (line[k] == '\0') k--;
-          k++;
-        }
+          }
 
-        /* printf("p = %zu\n", p); */
+          if (spcs == 2) {
+            (*fl)[p] = (*fl)[p - 1];
+            (*fl)[p - 1] = (*fl)[p - 2];
+            (*fl)[p + 1] = (*fl)[p];
+            (*fl)[p + 2] = (*fl)[p - 3];
+            p += 3;
+          }
 
-        if (spcs == 2) {
-          (*fl)[p] = (*fl)[p - 1];
-          (*fl)[p - 1] = (*fl)[p - 2];
-          (*fl)[p + 1] = (*fl)[p];
-          (*fl)[p + 2] = (*fl)[p - 3];
-          p += 3;
-        }
-
-        /* printf("p = %zu\n", p); */
-        if (spcs == 3) {
-          for(int l = 4; l > 2; l--, j++)
-            (*f)[j] = (*f)[j - l];
-
-          float tmp2 = (*fl)[p - 2];
-          float tmp1 = (*fl)[p - 1];
-          (*fl)[p - 2] = (*fl)[p - 3];
-          (*fl)[p - 1] = tmp2;
-          (*fl)[p] = tmp2;
-          (*fl)[p + 1] = tmp1;
-          (*fl)[p + 2] = tmp1;
-          (*fl)[p + 3] = (*fl)[p - 4];
-          p += 4;
-        }
+          if (spcs == 3) {
+            float tmp2 = (*fl)[p - 2];
+            float tmp1 = (*fl)[p - 1];
+            (*fl)[p - 2] = (*fl)[p - 3];
+            (*fl)[p - 1] = tmp2;
+            (*fl)[p] = tmp2;
+            (*fl)[p + 1] = tmp1;
+            (*fl)[p + 2] = tmp1;
+            (*fl)[p + 3] = (*fl)[p - 4];
+            p += 4;
+          }
         }
 
     } else if (line[0] == 'o' && line[1] == ' ') {
@@ -201,7 +220,7 @@ int toInt(char *src, size_t *i) {
 
 /* int main() { */
 /*   model m; */
-/*   parseobj("../models/prism.obj", &m); */
+/*   parseobj("../models/cessna.obj", &m); */
 /*   free(m.vertexArray); */
 /*   free(m.linesArray); */
 /*   free(m.name); */
