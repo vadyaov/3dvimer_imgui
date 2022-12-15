@@ -165,7 +165,7 @@ int main(int, char**) {
 
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(50.0f), 1280.0f / 720.0f, 0.1f, 500.0f);
     /* model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.7f, 0.0f)); */
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -zoom));
 
@@ -209,7 +209,7 @@ int main(int, char**) {
         fileDialog.Open();
       ImGui::Text("File:%s", filenamePtr);
       ImGui::Text("Model:%s", modelnamePtr);
-      ImGui::SliderFloat("Zoom", &zoom, 100.0f, 5.0f);
+      ImGui::SliderFloat("Zoom", &zoom, 200.0f, 5.0f);
 
       ImGui::InputFloat("Scale coef", &addScale, 0.01f, 1.0f, "%.3f");
       if (ImGui::Button("ScaleX"))

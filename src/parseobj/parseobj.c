@@ -16,18 +16,18 @@ void parseobj(const char *filename, model *m) {
 
   parse(file, vertices, &mainIndexArray, &edgeIndexArray, m);
 
-  /* printf("v_size:%zu\tf_size:%zu\n-----VERTICES-----\n", v_size, m->allIndex); */
+  printf("lines:%zu\ttriangles:%zu\n-----VERTICES-----\n", m->lineIndex, m->allIndex);
 
-/*   for (size_t i = 0; i < m->vertexNumber * 3; i++) */
-/*     printf("%f ", vertices[i]); */
+  /* for (size_t i = 0; i < m->vertexNumber * 3; i++) */
+  /*   printf("%f ", vertices[i]); */
 
-  printf("\n-----FACES-----\n");
-  for (size_t j = 0; j < m->allIndex; j++)
-    printf("%d ", mainIndexArray[j]);
+  /* printf("\n-----FACES TRIAN-----\n"); */
+  /* for (size_t j = 0; j < m->allIndex; j++) */
+  /*   printf("%d ", mainIndexArray[j]); */
 
-/*   printf("\n-----FACES LINES-----\n"); */
-/*   for (size_t j = 0; j < m->lineIndex; j++) */
-/*     printf("%d ", edgeIndexArray[j]); */
+  /* printf("\n-----FACES LINES-----\n"); */
+  /* for (size_t j = 0; j < m->lineIndex; j++) */
+  /*   printf("%d ", edgeIndexArray[j]); */
 
   m->vertexArray = (float *)calloc(m->allIndex * 3, sizeof(float));
   for (size_t i = 0, k = 0; k < m->allIndex; i += 3, k++) {
@@ -104,10 +104,10 @@ void parse(FILE *file, float *v, int **f, int **fl, model *m) {
       sscanf(line + 2, "%f %f %f", v + i, v + i + 1, v + i + 2);
       i += 3;
     } else if (line[0] == 'f' && line[1] == ' ') {
-      size_t k = 2, start = j;
+      size_t k = 2, startj = j, startp = p;
       size_t spcs = spaceNum(line + k);
 
-      printf("spaces = %zu\nstart = %zu\n", spcs, start);
+      /* printf("spaces = %zu\nstart = %zu\n", spcs, start); */
 
         m->allIndex += (spcs - 1) * 3;
         m->lineIndex += (spcs + 1) * 2;
@@ -117,58 +117,53 @@ void parse(FILE *file, float *v, int **f, int **fl, model *m) {
         *f = (int *)realloc(*f, m->allIndex * sizeof(int));
         *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
         if (*f && *fl) {
+          size_t mm = 0;
           // write better algh for lines idx
           while (line[k] != '\0') {
+            int cur = toInt(line + k, &k);
+            /* printf("J = %zu\t j - start = %zu\n", j, j - start); */
+            /* printf("Line:%s\n", line); */
 
-            printf("J = %zu\t j - start = %zu\n", j, j - start);
-            printf("Line:%s\n", line);
+            /* printf("P = %zu\t p - start = %zu\n", p, p - startp); */
+            /* printf("Line:%s\n", line); */
 
-            if ((j - start) == 3) {
+            if ((j - startj) == 3) {
               (*f)[j] = (*f)[j - 1];
               j++;
             }
 
-            if ((j - start) % 3 == 0 && (j - start) > 5) {
+            if ((j - startj) % 3 == 0 && (j - startj) > 5) {
               (*f)[j] = (*f)[j - 2];
               j++;
             }
 
-            (*f)[j] = toInt(line + k, &k);
-            (*fl)[p] = (*f)[j];
+
+            (*f)[j] = cur;
             j++;
+            (*fl)[p] = cur;
             p++;
 
             // improve this shit somehow!!!
-            if ((j - start) == 5 || (j - start) == 8 || (j - start) == 11 || (j - start) == 14
-                       || (j - start) == 17 || (j - start) == 20 || (j - start) == 23) {
-              (*f)[j] = (*f)[start];
+            if ((j - startj) == 5 + 3 * mm) {
+              mm++;
+              (*f)[j] = (*f)[startj];
               j++;
+            }
+
+            if ((p - startp) % 2 == 0 && p > 0) {
+              (*fl)[p] = (*fl)[p - 1];
+              p++;
+            }
+
+            if ((p - startp) == (spcs + 1) * 2 - 1) {
+              (*fl)[p] = (*fl)[startp];
+              p++;
             }
 
             while (line[k] != ' ' && line[k] != '\0')
               k++;
             if (line[k] == '\0') k--;
             k++;
-          }
-
-          if (spcs == 2) {
-            (*fl)[p] = (*fl)[p - 1];
-            (*fl)[p - 1] = (*fl)[p - 2];
-            (*fl)[p + 1] = (*fl)[p];
-            (*fl)[p + 2] = (*fl)[p - 3];
-            p += 3;
-          }
-
-          if (spcs == 3) {
-            float tmp2 = (*fl)[p - 2];
-            float tmp1 = (*fl)[p - 1];
-            (*fl)[p - 2] = (*fl)[p - 3];
-            (*fl)[p - 1] = tmp2;
-            (*fl)[p] = tmp2;
-            (*fl)[p + 1] = tmp1;
-            (*fl)[p + 2] = tmp1;
-            (*fl)[p + 3] = (*fl)[p - 4];
-            p += 4;
           }
         }
 
