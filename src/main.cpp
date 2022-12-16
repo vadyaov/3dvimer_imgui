@@ -130,6 +130,7 @@ int main(int, char**) {
   float zoom = 10.0f;
   float scaleX = 1.0, scaleY = 1.0, scaleZ = 1.0;
   float addScale = 0.0f, moveRange = 0.0f, angle = 0.0;
+  bool triangles = true, lines = true;
 
   parseobj(path.c_str(), &m);
 
@@ -157,17 +158,22 @@ int main(int, char**) {
     // Start the Dear Imgui frame
     startFrame();
 
+    if (triangles) {
     glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
     glBufferData(GL_ARRAY_BUFFER, m.allIndex * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
+    }
 
+    if (lines) {
     glBindBuffer(GL_ARRAY_BUFFER, linesVBO);
     glBufferData(GL_ARRAY_BUFFER, m.lineIndex * 3 * sizeof(float), &m.linesArray[0], GL_STATIC_DRAW);
+    }
 
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(50.0f), 1280.0f / 720.0f, 0.1f, 500.0f);
-    /* model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.7f, 0.0f)); */
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -zoom));
+    if (triangles) {
+    /* model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.7f, 0.0f)); */
 
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -184,7 +190,8 @@ int main(int, char**) {
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, m.allIndex * 3);
-
+    }
+    if (lines) {
     GLuint modelLoc1 = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(modelLoc1, 1, GL_FALSE, glm::value_ptr(model));
     GLuint viewLoc1 = glGetUniformLocation(shaderProgram, "view");
@@ -201,6 +208,7 @@ int main(int, char**) {
     glBindVertexArray(VAO);
     glDrawArrays(GL_LINES, 0, m.lineIndex * 3);
 
+    }
     glDisableVertexAttribArray(0);
 
     {
@@ -209,29 +217,52 @@ int main(int, char**) {
         fileDialog.Open();
       ImGui::Text("File:%s", filenamePtr);
       ImGui::Text("Model:%s", modelnamePtr);
+      ImGui::Text("Vertex:%zu", m.vertexNumber);
+      ImGui::SameLine();
+      ImGui::Text("\t\tIndex:%zu", m.indexNumber);
+
+      ImGui::Separator();
+
       ImGui::SliderFloat("Zoom", &zoom, 200.0f, 5.0f);
 
-      ImGui::InputFloat("Scale coef", &addScale, 0.01f, 1.0f, "%.3f");
+      ImGui::InputFloat("Scale coef", &addScale, 0.1f, 5.0f, "%.3f");
+      if (addScale < 0) addScale = -1 / addScale;
       if (ImGui::Button("ScaleX"))
-        scale(&m, scaleX + addScale, scaleY, scaleZ);
+        scale(&m, addScale, 1, 1);
       ImGui::SameLine();
       if (ImGui::Button("ScaleY"))
-        scale(&m, scaleX, scaleY + addScale, scaleZ);
+        scale(&m, 1, addScale, 1);
       ImGui::SameLine();
       if (ImGui::Button("ScaleZ"))
-        scale(&m, scaleX, scaleY, scaleZ + addScale);
+        scale(&m, scaleX, scaleY, addScale);
 
-      ImGui::SliderFloat("Move range", &moveRange, -5.0f, 5.0f);
-      if (ImGui::Button("MoveX"))
+      ImGui::Separator();
+
+      ImGui::SliderFloat("Move range", &moveRange, 0.0f, 10.0f);
+      ImGui::PushButtonRepeat(true);
+      if (ImGui::ArrowButton("##left", ImGuiDir_Left))
+        move(&m, -moveRange, 0, 0);
+      ImGui::SameLine();
+      if (ImGui::ArrowButton("##right", ImGuiDir_Right))
         move(&m, moveRange, 0, 0);
       ImGui::SameLine();
-      if (ImGui::Button("MoveY"))
+      if (ImGui::ArrowButton("##up", ImGuiDir_Up))
         move(&m, 0, moveRange, 0);
       ImGui::SameLine();
-      if (ImGui::Button("MoveZ"))
+      if (ImGui::ArrowButton("##down", ImGuiDir_Down))
+        move(&m, 0, -moveRange, 0);
+      ImGui::SameLine();
+      if (ImGui::Button("Farther(-Z)"))
+        move(&m, 0, 0, -moveRange);
+      ImGui::SameLine();
+      if (ImGui::Button("Closer(+Z)"))
         move(&m, 0, 0, moveRange);
+      ImGui::PopButtonRepeat();
+
+      ImGui::Separator();
 
       ImGui::InputFloat("Angle", &angle, 1.0f, 1.0f, "%.1f");
+      ImGui::PushButtonRepeat(true);
       if (ImGui::Button("RotateX"))
         rotate(&m, angle, 'x');
       ImGui::SameLine();
@@ -240,10 +271,24 @@ int main(int, char**) {
       ImGui::SameLine();
       if (ImGui::Button("RotateZ"))
         rotate(&m, angle, 'z');
+      ImGui::PopButtonRepeat();
+
+      ImGui::Separator();
+
+      if (ImGui::Button("RESET ALL")) {
+        free(m.vertexArray);
+        free(m.linesArray);
+        parseobj(path.c_str(), &m);
+      }
 
       ImGui::ColorEdit3("Background color", (float*)&clear_color);
       ImGui::ColorEdit3("Vertex color", (float*)&vertex_color);
       ImGui::ColorEdit3("Edge color", (float*)&edge_color);
+
+      ImGui::Checkbox("Triangles", &triangles);
+      ImGui::SameLine();
+      ImGui::Checkbox("Lines", &lines);
+
       ImGui::End();
     }
 
