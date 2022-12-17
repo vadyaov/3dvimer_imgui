@@ -22,6 +22,17 @@ extern "C" {
 
 #define GL_SILENCE_DEPRECATION
 
+static void HelpMarker(const char* desc) {
+  ImGui::TextDisabled("(?)");
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
+    ImGui::BeginTooltip();
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+    ImGui::TextUnformatted(desc);
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
+}
+
 static void glfw_error_callback(int error, const char* description) {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
@@ -41,9 +52,9 @@ static void startFrame() {
 static void render(ImVec4 &clear_color, GLFWwindow* window) {
   ImGui::Render();
   // changing model when resize window
-  /* int display_w, display_h; */
-  /* glfwGetFramebufferSize(window, &display_w, &display_h); */
-  /* glViewport(0, 0, display_w, display_h); */
+  int display_w, display_h;
+  glfwGetFramebufferSize(window, &display_w, &display_h);
+  glViewport(0, 0, display_w, display_h);
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
@@ -131,6 +142,7 @@ int main(int, char**) {
   float scaleX = 1.0, scaleY = 1.0, scaleZ = 1.0;
   float addScale = 0.0f, moveRange = 0.0f, angle = 0.0;
   bool triangles = true, lines = true;
+  int linewidth = 0;
 
   parseobj(path.c_str(), &m);
 
@@ -167,7 +179,6 @@ int main(int, char**) {
     glBindBuffer(GL_ARRAY_BUFFER, linesVBO);
     glBufferData(GL_ARRAY_BUFFER, m.lineIndex * 3 * sizeof(float), &m.linesArray[0], GL_STATIC_DRAW);
     }
-
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(50.0f), 1280.0f / 720.0f, 0.1f, 500.0f);
@@ -206,6 +217,7 @@ int main(int, char**) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
 
     glBindVertexArray(VAO);
+    glLineWidth(linewidth);
     glDrawArrays(GL_LINES, 0, m.lineIndex * 3);
 
     }
@@ -261,7 +273,8 @@ int main(int, char**) {
 
       ImGui::Separator();
 
-      ImGui::InputFloat("Angle", &angle, 1.0f, 1.0f, "%.1f");
+      /* ImGui::InputFloat("Angle", &angle, 1.0f, 1.0f, "%.1f"); */
+      ImGui::SliderAngle("Angle", &angle);
       ImGui::PushButtonRepeat(true);
       if (ImGui::Button("RotateX"))
         rotate(&m, angle, 'x');
@@ -280,15 +293,20 @@ int main(int, char**) {
         free(m.linesArray);
         parseobj(path.c_str(), &m);
       }
+      ImGui::SameLine(); HelpMarker("Resets the position, scale, rotation");
 
       ImGui::ColorEdit3("Background color", (float*)&clear_color);
       ImGui::ColorEdit3("Vertex color", (float*)&vertex_color);
       ImGui::ColorEdit3("Edge color", (float*)&edge_color);
 
+      ImGui::SliderInt("Edge width", &linewidth, 0, 5);
+      ImGui::SameLine(); HelpMarker("CTRL + click to input value");
+
       ImGui::Checkbox("Triangles", &triangles);
       ImGui::SameLine();
       ImGui::Checkbox("Lines", &lines);
 
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
     }
 

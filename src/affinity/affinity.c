@@ -15,7 +15,6 @@ void _move(float *array, size_t size, double x, double y, double z) {
 
 // angle in degrees!
 void rotate(model *m, double angle, char axis) {
-  angle *= M_PI / 180.0;
   _rotate(m->vertexArray, angle, m->allIndex * 3, axis);
   _rotate(m->linesArray, angle, m->lineIndex * 3, axis);
 }

@@ -192,9 +192,11 @@ size_t nameSize(char *line) {
 }
 
 size_t spaceNum(char *line) {
-  size_t sp = 0;
-  while (*line != '\0') {
-    if (*line++ == ' ') sp++;
+  size_t sp = 0, i = 0;
+  while (line[i] != '\0') {
+    if (line[i] == ' ' && line[i + 1] != '\0')
+      sp++;
+    i++;
   }
   return sp;
 }
