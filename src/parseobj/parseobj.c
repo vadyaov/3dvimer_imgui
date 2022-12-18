@@ -116,7 +116,7 @@ void parse(FILE *file, float *v, int **f, int **fl, model *m) {
 
         *f = (int *)realloc(*f, m->allIndex * sizeof(int));
         *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
-        if (*f && *fl) {
+        if (*fl) {
           size_t mm = 0;
           // write better algh for lines idx
           while (line[k] != '\0') {
@@ -143,7 +143,6 @@ void parse(FILE *file, float *v, int **f, int **fl, model *m) {
             (*fl)[p] = cur;
             p++;
 
-            // improve this shit somehow!!!
             if ((j - startj) == 5 + 3 * mm) {
               mm++;
               (*f)[j] = (*f)[startj];
@@ -215,11 +214,11 @@ int toInt(char *src, size_t *i) {
   return res;
 }
 
-/* int main() { */
-/*   model m; */
-/*   parseobj("../models/cessna.obj", &m); */
-/*   free(m.vertexArray); */
-/*   free(m.linesArray); */
-/*   free(m.name); */
-/*   return 0; */
-/* } */
+ /*int main() {
+   model m;
+   parseobj("../models/tree.obj", &m);
+   free(m.vertexArray);
+   free(m.linesArray);
+   free(m.name);
+   return 0;
+ }*/
