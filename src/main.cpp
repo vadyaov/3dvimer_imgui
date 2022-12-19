@@ -96,57 +96,21 @@ int main(int, char**) {
     // Start the Dear Imgui frame
     startFrame();
 
-    if (s.triangles) {
-      glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
-      glBufferData(GL_ARRAY_BUFFER, m.allIndex * 3 * sizeof(float), &m.vertexArray[0], GL_STATIC_DRAW);
-    }
-
-    if (s.lines) {
-      glBindBuffer(GL_ARRAY_BUFFER, linesVBO);
-      glBufferData(GL_ARRAY_BUFFER, m.lineIndex * 3 * sizeof(float), &m.linesArray[0], GL_STATIC_DRAW);
-    }
-
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(50.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 500.0f);
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -s.zoom));
 
     if (s.triangles) {
-      /* model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.7f, 0.0f)); */
-      GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-      GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
-      glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-      GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-      glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-      
+      makeMVP(model, view, projection, shaderProgram);
       glUniform4f(vertexColorLocation, vertex_color.x, vertex_color.y, vertex_color.z, vertex_color.w);
-
-      glEnableVertexAttribArray(0);
-      glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
-
-      glBindVertexArray(VAO);
-      glDrawArrays(GL_TRIANGLES, 0, m.allIndex * 3);
+      draw(vertexVBO, m.allIndex * 3, &m.vertexArray[0], VAO, GL_TRIANGLES);
     }
 
     if (s.lines) {
-      GLuint modelLoc1 = glGetUniformLocation(shaderProgram, "model");
-      glUniformMatrix4fv(modelLoc1, 1, GL_FALSE, glm::value_ptr(model));
-      GLuint viewLoc1 = glGetUniformLocation(shaderProgram, "view");
-      glUniformMatrix4fv(viewLoc1, 1, GL_FALSE, glm::value_ptr(view));
-      GLuint projectionLoc1 = glGetUniformLocation(shaderProgram, "projection");
-      glUniformMatrix4fv(projectionLoc1, 1, GL_FALSE, glm::value_ptr(projection));
-      
+      makeMVP(model, view, projection, shaderProgram);
       glUniform4f(vertexColorLocation, edge_color.x, edge_color.y, edge_color.z, edge_color.w);
-
-      glEnableVertexAttribArray(0);
-      glBindBuffer(GL_ARRAY_BUFFER, linesVBO);
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
-
-      glBindVertexArray(VAO);
-      glLineWidth(s.linewidth);
-      glDrawArrays(GL_LINES, 0, m.lineIndex * 3);
+      draw(linesVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES);
     }
 
     glDisableVertexAttribArray(0);
@@ -283,7 +247,7 @@ int main(int, char**) {
   return 0;
 }
 
-static void HelpMarker(const char* desc) {
+void HelpMarker(const char* desc) {
   ImGui::TextDisabled("(?)");
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
     ImGui::BeginTooltip();
@@ -294,23 +258,23 @@ static void HelpMarker(const char* desc) {
   }
 }
 
-static void glfw_error_callback(int error, const char* description) {
+void glfw_error_callback(int error, const char* description) {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
 // closing window by pressing ESC
-static void processInput(GLFWwindow *window) {
+void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
 }
 
-static void startFrame() {
+void startFrame() {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 }
 
-static void render(ImVec4 &clear_color, GLFWwindow* window) {
+void render(ImVec4 &clear_color, GLFWwindow* window) {
   ImGui::Render();
   int display_w, display_h;
   glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -322,11 +286,32 @@ std::string getFilename(std::string& path) {
   return path.substr(path.find_last_of('/') + 1);
 }
 
-static void initSettings(Settings *s) {
+void initSettings(Settings *s) {
   s->zoom = 10.0f;
   s->addScale = 0.0f;
   s->moveRange = 0.0f;
   s->angle = 0.0f;
   s->triangles = true, s->lines = true;
   s->linewidth = 0;
+}
+
+void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint shaderProgram) {
+  GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+  GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+  GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+}
+
+void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type) {
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), array, GL_STATIC_DRAW);
+  
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
+
+  glBindVertexArray(VAO);
+  glDrawArrays(type, 0, size);
 }
