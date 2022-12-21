@@ -6,7 +6,7 @@ void parseobj(const char *filename, model *m) {
 
   count(file, &m->vertexNumber, &m->indexNumber);
 
-  printf("v:%zu\tf:%zu\n", m->vertexNumber, m->indexNumber);
+  /* printf("v:%zu\tf:%zu\n", m->vertexNumber, m->indexNumber); */
 
   size_t v_size = 3 * m->vertexNumber;
   
@@ -14,9 +14,9 @@ void parseobj(const char *filename, model *m) {
   int *mainIndexArray = NULL;
   int *edgeIndexArray = NULL;
 
-  parse(file, vertices, &mainIndexArray, &edgeIndexArray, m);
+  int e = parse(file, vertices, &mainIndexArray, &edgeIndexArray, m);
 
-  printf("lines:%zu\ttriangles:%zu\n-----VERTICES-----\n", m->lineIndex, m->allIndex);
+  /* printf("lines:%zu\ttriangles:%zu\n-----VERTICES-----\n", m->lineIndex, m->allIndex); */
 
   /* for (size_t i = 0; i < m->vertexNumber * 3; i++) */
   /*   printf("%f ", vertices[i]); */
@@ -29,20 +29,20 @@ void parseobj(const char *filename, model *m) {
   /* for (size_t j = 0; j < m->lineIndex; j++) */
   /*   printf("%d ", edgeIndexArray[j]); */
 
-  m->vertexArray = (float *)calloc(m->allIndex * 3, sizeof(float));
-  for (size_t i = 0, k = 0; k < m->allIndex; i += 3, k++) {
-    for (size_t j = 0; j < 3; j++) {
-      m->vertexArray[i + j] = vertices[(mainIndexArray[k] - 1) * 3 + j];
-    }
+  if (!e) {
+    m->vertexArray = (float *)calloc(m->allIndex * 3, sizeof(float));
+    if (m->vertexArray)
+    for (size_t i = 0, k = 0; k < m->allIndex; i += 3, k++)
+      for (size_t j = 0; j < 3; j++)
+        m->vertexArray[i + j] = vertices[(mainIndexArray[k] - 1) * 3 + j];
   }
 
   /* printf("m->lineIndex = %zu\n", m->lineIndex); */
   m->linesArray = (float *)calloc(m->lineIndex * 3, sizeof(float));
-  for (size_t i = 0, k = 0; k < m->lineIndex; i += 3, k++) {
-    for (size_t j = 0; j < 3; j++) {
+  if (m->linesArray)
+  for (size_t i = 0, k = 0; k < m->lineIndex; i += 3, k++)
+    for (size_t j = 0; j < 3; j++)
       m->linesArray[i + j] = vertices[(edgeIndexArray[k] - 1) * 3 + j];
-    }
-  }
 
 /*   printf("\n-----AFTER INDEXING-----\n"); */
 /*   for (size_t i = 0, j = 0; i < m->allIndex * 3; i++) { */
@@ -94,7 +94,8 @@ void count(FILE *file, size_t *vertexNumber, size_t *indexNumber) {
 }
 
  /* ONLY 3 or 4 idx in one face! */
-void parse(FILE *file, float *v, int **f, int **fl, model *m) {
+int parse(FILE *file, float *v, int **f, int **fl, model *m) {
+  int errMark = 0;
   char *line = NULL;
   size_t len = 0;
   size_t i = 0, j = 0, p = 0;
@@ -106,71 +107,72 @@ void parse(FILE *file, float *v, int **f, int **fl, model *m) {
     } else if (line[0] == 'f' && line[1] == ' ') {
       size_t k = 2, startj = j, startp = p;
       size_t spcs = spaceNum(line + k);
+      size_t mm = 0;
 
       /* printf("spaces = %zu\nstart = %zu\n", spcs, start); */
 
+      if (!errMark && spcs > 1) {
         m->allIndex += (spcs - 1) * 3;
         m->lineIndex += (spcs + 1) * 2;
-
-        /* printf("all:%zu\tline%zu\n", m->allIndex, m->lineIndex); */
-
+      } else {
+        m->lineIndex += 2;
+        errMark = 1;
+      }
+      /* printf("all:%zu\tline%zu\n", m->allIndex, m->lineIndex); */
+      if (!errMark)
         *f = (int *)realloc(*f, m->allIndex * sizeof(int));
-        *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
-        if (*fl) {
-          size_t mm = 0;
-          // write better algh for lines idx
-          while (line[k] != '\0') {
-            int cur = toInt(line + k, &k);
-            /* printf("J = %zu\t j - start = %zu\n", j, j - start); */
-            /* printf("Line:%s\n", line); */
+      *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
 
-            /* printf("P = %zu\t p - start = %zu\n", p, p - startp); */
-            /* printf("Line:%s\n", line); */
+      // DONT FORGET TO CHECK MEMORY!!! //
 
-            if ((j - startj) == 3) {
-              (*f)[j] = (*f)[j - 1];
-              j++;
-            }
+      while (line[k] != '\0') {
+        int cur = toInt(line + k, &k);
+        /* printf("J = %zu\t j - start = %zu\n", j, j - start); */
+        /* printf("Line:%s\n", line); */
 
-            if ((j - startj) % 3 == 0 && (j - startj) > 5) {
-              (*f)[j] = (*f)[j - 2];
-              j++;
-            }
+        /* printf("P = %zu\t p - start = %zu\n", p, p - startp); */
+        /* printf("Line:%s\n", line); */
 
-
-            (*f)[j] = cur;
+        if (!errMark) {
+          if ((j - startj) == 3) {
+            (*f)[j] = (*f)[j - 1];
             j++;
-            (*fl)[p] = cur;
-            p++;
-
-            if ((j - startj) == 5 + 3 * mm) {
-              mm++;
-              (*f)[j] = (*f)[startj];
-              j++;
-            }
-
-            if ((p - startp) % 2 == 0 && p > 0) {
-              (*fl)[p] = (*fl)[p - 1];
-              p++;
-            }
-
-            if ((p - startp) == (spcs + 1) * 2 - 1) {
-              (*fl)[p] = (*fl)[startp];
-              p++;
-            }
-
-            while (line[k] != ' ' && line[k] != '\0')
-              k++;
-            if (line[k] == '\0') k--;
-            k++;
+          }
+          if ((j - startj) % 3 == 0 && (j - startj) > 5) {
+            (*f)[j] = (*f)[j - 2];
+            j++;
+          }
+          (*f)[j++] = cur;
+          if ((j - startj) == 5 + 3 * mm) {
+            mm++;
+            (*f)[j] = (*f)[startj];
+            j++;
           }
         }
 
+        (*fl)[p++] = cur;
+        if (!errMark) {
+          if ((p - startp) % 2 == 0 && p > 0) {
+            (*fl)[p] = (*fl)[p - 1];
+            p++;
+          }
+          if ((p - startp) == (spcs + 1) * 2 - 1) {
+            (*fl)[p] = (*fl)[startp];
+            p++;
+          }
+        }
+
+        while (line[k] != ' ' && line[k] != '\0')
+          k++;
+        if (line[k] == '\0') k--;
+        k++;
+      }
     } else if (line[0] == 'o' && line[1] == ' ') {
       loadObjectName(line, &m->name);
     }
   }
   if (line) free(line);
+  return errMark;
 }
 
 void loadObjectName(char *line, char **name) {
@@ -214,11 +216,11 @@ int toInt(char *src, size_t *i) {
   return res;
 }
 
- /*int main() {
-   model m;
-   parseobj("../models/tree.obj", &m);
-   free(m.vertexArray);
-   free(m.linesArray);
-   free(m.name);
-   return 0;
- }*/
+/* int main() { */
+/*    model m; */
+/*    parseobj("../models/dragon.obj", &m); */
+/*    free(m.vertexArray); */
+/*    free(m.linesArray); */
+/*    free(m.name); */
+/*    return 0; */
+/*  } */

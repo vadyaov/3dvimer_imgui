@@ -52,9 +52,6 @@ int main(int, char**) {
   ImVec4 vertex_color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
   ImVec4 edge_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
-
   ImGui::FileBrowser fileDialog;
   fileDialog.SetTitle("Choose model");
   fileDialog.SetTypeFilters({".obj"});
@@ -66,15 +63,14 @@ int main(int, char**) {
   model m;
   Settings s;
   initSettings(&s);
-  std::string path = "models/prism.obj";
+  std::string path = "models/cube.obj";
   std::string filename = getFilename(path);
   const char *filenamePtr = filename.c_str();
   static int scheme = 0;
 
   parseobj(path.c_str(), &m);
 
-  const char *modelnamePtr = NULL;
-  if (m.name != NULL) modelnamePtr = m.name;
+  const char *modelnamePtr = m.name;
 
   GLuint VAO;
   glGenVertexArrays(1, &VAO);
@@ -85,6 +81,9 @@ int main(int, char**) {
 
   GLuint linesVBO;
   glGenBuffers(1, &linesVBO);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
@@ -104,13 +103,13 @@ int main(int, char**) {
     if (s.triangles) {
       makeMVP(model, view, projection, shaderProgram);
       glUniform4f(vertexColorLocation, vertex_color.x, vertex_color.y, vertex_color.z, vertex_color.w);
-      draw(vertexVBO, m.allIndex * 3, &m.vertexArray[0], VAO, GL_TRIANGLES);
+      draw(vertexVBO, m.allIndex * 3, &m.vertexArray[0], VAO, GL_TRIANGLES, s.linewidth);
     }
 
     if (s.lines) {
       makeMVP(model, view, projection, shaderProgram);
       glUniform4f(vertexColorLocation, edge_color.x, edge_color.y, edge_color.z, edge_color.w);
-      draw(linesVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES);
+      draw(linesVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES, s.linewidth);
     }
 
     glDisableVertexAttribArray(0);
@@ -199,7 +198,7 @@ int main(int, char**) {
       ImGui::ColorEdit3("Vertex color", (float*)&vertex_color);
       ImGui::ColorEdit3("Edge color", (float*)&edge_color);
 
-      ImGui::SliderInt("Edge width", &s.linewidth, 0, 5);
+      ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
       ImGui::SameLine(); HelpMarker("CTRL + click to input value");
 
       ImGui::Checkbox("Triangles", &s.triangles);
@@ -292,7 +291,7 @@ void initSettings(Settings *s) {
   s->moveRange = 0.0f;
   s->angle = 0.0f;
   s->triangles = true, s->lines = true;
-  s->linewidth = 0;
+  s->linewidth = 1;
 }
 
 void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint shaderProgram) {
@@ -304,7 +303,7 @@ void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint sh
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type) {
+void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int linewidth) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), array, GL_STATIC_DRAW);
   
@@ -313,5 +312,7 @@ void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type) {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
 
   glBindVertexArray(VAO);
+  if (type == GL_LINES)
+    glLineWidth(linewidth);
   glDrawArrays(type, 0, size);
 }

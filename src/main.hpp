@@ -43,4 +43,4 @@ void glfw_error_callback(int error, const char* description);
 void HelpMarker(const char* desc);
 void initSettings(Settings *s);
 void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint shaderProgram);
-void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type);
+void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int linewidth);
