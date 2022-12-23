@@ -48,10 +48,6 @@ int main(int, char**) {
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
   
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-  ImVec4 vertex_color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
-  ImVec4 edge_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-
   ImGui::FileBrowser fileDialog;
   fileDialog.SetTitle("Choose model");
   fileDialog.SetTypeFilters({".obj"});
@@ -63,14 +59,9 @@ int main(int, char**) {
   model m;
   Settings s;
   initSettings(&s);
-  std::string path = "models/cube.obj";
-  std::string filename = getFilename(path);
-  const char *filenamePtr = filename.c_str();
-  static int scheme = 0;
 
-  parseobj(path.c_str(), &m);
-
-  const char *modelnamePtr = m.name;
+  parseobj(s.path.c_str(), &m);
+  s.modelnamePtr = m.name;
 
   GLuint VAO;
   glGenVertexArrays(1, &VAO);
@@ -87,8 +78,8 @@ int main(int, char**) {
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
-               clear_color.z * clear_color.w, clear_color.w);
+    glClearColor(s.clear_color.x * s.clear_color.w, s.clear_color.y * s.clear_color.w,
+               s.clear_color.z * s.clear_color.w, s.clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     processInput(window);
 
@@ -102,13 +93,13 @@ int main(int, char**) {
 
     if (s.triangles) {
       makeMVP(model, view, projection, shaderProgram);
-      glUniform4f(vertexColorLocation, vertex_color.x, vertex_color.y, vertex_color.z, vertex_color.w);
+      glUniform4f(vertexColorLocation, s.vertex_color.x, s.vertex_color.y, s.vertex_color.z, s.vertex_color.w);
       draw(vertexVBO, m.allIndex * 3, &m.vertexArray[0], VAO, GL_TRIANGLES, s.linewidth);
     }
 
     if (s.lines) {
       makeMVP(model, view, projection, shaderProgram);
-      glUniform4f(vertexColorLocation, edge_color.x, edge_color.y, edge_color.z, edge_color.w);
+      glUniform4f(vertexColorLocation, s.edge_color.x, s.edge_color.y, s.edge_color.z, s.edge_color.w);
       draw(linesVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES, s.linewidth);
     }
 
@@ -120,15 +111,15 @@ int main(int, char**) {
         fileDialog.Open();
 
       ImGui::SameLine();
-      ImGui::RadioButton("Dark", &scheme, 0); ImGui::SameLine();
-      ImGui::RadioButton("Light", &scheme, 1);
-      if (!scheme)
+      ImGui::RadioButton("Dark", &s.scheme, 0); ImGui::SameLine();
+      ImGui::RadioButton("Light", &s.scheme, 1);
+      if (!s.scheme)
        ImGui::StyleColorsDark();
       else
         ImGui::StyleColorsLight();
 
-      ImGui::Text("File:%s", filenamePtr);
-      ImGui::Text("Model:%s", modelnamePtr);
+      ImGui::Text("File:%s", s.filenamePtr);
+      ImGui::Text("Model:%s", s.modelnamePtr);
       ImGui::Text("Vertex:%zu", m.vertexNumber);
       ImGui::SameLine();
       ImGui::Text("\t\tIndex:%zu", m.indexNumber);
@@ -190,13 +181,13 @@ int main(int, char**) {
       if (ImGui::Button("RESET ALL")) {
         free(m.vertexArray);
         free(m.linesArray);
-        parseobj(path.c_str(), &m);
+        parseobj(s.path.c_str(), &m);
       }
       ImGui::SameLine(); HelpMarker("Resets the position, scale, rotation");
 
-      ImGui::ColorEdit3("Background color", (float*)&clear_color);
-      ImGui::ColorEdit3("Vertex color", (float*)&vertex_color);
-      ImGui::ColorEdit3("Edge color", (float*)&edge_color);
+      ImGui::ColorEdit3("Background color", (float*)&s.clear_color);
+      ImGui::ColorEdit3("Vertex color", (float*)&s.vertex_color);
+      ImGui::ColorEdit3("Edge color", (float*)&s.edge_color);
 
       ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
       ImGui::SameLine(); HelpMarker("CTRL + click to input value");
@@ -212,23 +203,27 @@ int main(int, char**) {
     fileDialog.Display();
 
     if (fileDialog.HasSelected()) {
-      path = fileDialog.GetSelected();
-      filename = getFilename(path);
-      filenamePtr = filename.c_str();
+      s.path = fileDialog.GetSelected();
+      s.filename = getFilename(s.path);
+      s.filenamePtr = s.filename.c_str();
       free(m.vertexArray);
       free(m.linesArray);
       if (m.name) free(m.name);
-      parseobj(path.c_str(), &m);
-      modelnamePtr = m.name;
+      parseobj(s.path.c_str(), &m);
+      s.modelnamePtr = m.name;
       fileDialog.ClearSelected();
     }
 
     // Rendering
-    render(clear_color, window);
+    render(s.clear_color, window);
 
     glfwSwapBuffers(window);
     // Poll and handle events (inputs, window resize, etc.)
     glfwPollEvents();
+    if (glfwWindowShouldClose(window)) {
+      cleanFile("savefile.vimer");
+      saveSettings("savefile.vimer", &s);
+    }
   }
 
   // Cleanup
@@ -286,12 +281,58 @@ std::string getFilename(std::string& path) {
 }
 
 void initSettings(Settings *s) {
-  s->zoom = 10.0f;
-  s->addScale = 0.0f;
-  s->moveRange = 0.0f;
-  s->angle = 0.0f;
-  s->triangles = true, s->lines = true;
-  s->linewidth = 1;
+  FILE *f = fopen("savefile.vimer", "r");
+  if (f) {
+    char *line = NULL;
+    size_t len = 0;
+    size_t i = 0;
+    float r = 0.0f, g = 0.0f, b = 0.0f, w = 0.0f;
+    while (i < 12) {
+      getline(&line, &len, f);
+      if (0 == i) {
+        s->zoom = std::atof(line);
+      } else if (1 == i) {
+        s->addScale = std::atof(line);
+      } else if (2 == i) {
+        s->moveRange = std::atof(line);
+      } else if (3 == i) {
+        s->angle = std::atof(line);
+      } else if (4 == i) {
+        s->linewidth = std::atoi(line);
+      } else if (5 == i) {
+        if (std::atoi(line) == 1)
+          s->triangles = true;
+        else
+          s->triangles = false;
+      } else if (6 == i) {
+        if (std::atoi(line) == 1)
+          s->lines = true;
+        else
+          s->lines = false;
+      } else if (i == 7) {
+        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
+        s->clear_color = ImVec4(r, g, b, w);
+      } else if (i == 8) {
+        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
+        s->vertex_color = ImVec4(r, g, b, w);
+      } else if (i == 9) {
+        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
+        s->edge_color = ImVec4(r, g, b, w);
+      } else if (i == 10) {
+        for (size_t j = 0; line[j] != '\n' && line[j] != '\0'; j++)
+          s->path += line[j];
+          s->filename = getFilename(s->path);
+          s->filenamePtr = s->filename.c_str();
+      } else if (i == 11) {
+        s->scheme = atoi(line);
+      }
+      i++;
+    }
+    if (line) free(line);
+    fclose(f);
+  } else {
+    std::cout << "No savefile.vimer in current directory\n";
+  }
 }
 
 void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint shaderProgram) {
@@ -315,4 +356,29 @@ void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int li
   if (type == GL_LINES)
     glLineWidth(linewidth);
   glDrawArrays(type, 0, size);
+}
+
+void cleanFile(const char *str) {
+  std::ofstream ofs;
+  ofs.open(str, std::ofstream::out | std::ofstream::trunc);
+  ofs.close();
+}
+
+void saveSettings(const char *str, Settings *s) {
+  FILE *fp = fopen(str, "w");
+  if (fp) {
+    fprintf(fp, "%f\n", s->zoom);
+    fprintf(fp, "%f\n", s->addScale);
+    fprintf(fp, "%f\n", s->moveRange);
+    fprintf(fp, "%f\n", s->angle);
+    fprintf(fp, "%d\n", s->linewidth);
+    fprintf(fp, "%d\n", s->triangles);
+    fprintf(fp, "%d\n", s->lines);
+    fprintf(fp, "%f %f %f %f\n", s->clear_color.x, s->clear_color.y, s->clear_color.z, s->clear_color.w);
+    fprintf(fp, "%f %f %f %f\n", s->vertex_color.x, s->vertex_color.y, s->vertex_color.z, s->vertex_color.w);
+    fprintf(fp, "%f %f %f %f\n", s->edge_color.x, s->edge_color.y, s->edge_color.z, s->edge_color.w);
+    fprintf(fp, "%s\n", s->path.c_str());
+    fprintf(fp, "%d\n", s->scheme);
+    fclose(fp);
+  }
 }

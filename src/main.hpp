@@ -17,6 +17,7 @@ extern "C" {
 #include "shaders/glshader.hpp"
 #include "affinity/affinity.h"
 #include <iostream>
+#include <fstream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -26,13 +27,24 @@ extern "C" {
 #define SCREEN_WIDTH 1280.0f
 #define SCREEN_HEIGHT 720.0f
 
-typedef struct Model {
+typedef struct ProgramState {
   float zoom;
   float addScale;
   float moveRange;
   float angle;
-  bool triangles, lines;
   int linewidth;
+  bool triangles, lines;
+
+  ImVec4 clear_color;
+  ImVec4 vertex_color;
+  ImVec4 edge_color;
+
+  std::string path;
+  std::string filename;
+  const char *filenamePtr;
+  const char *modelnamePtr;
+
+  int scheme;
 } Settings;
 
 std::string getFilename(std::string& path);
@@ -44,3 +56,5 @@ void HelpMarker(const char* desc);
 void initSettings(Settings *s);
 void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint shaderProgram);
 void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int linewidth);
+void cleanFile(const char *str);
+void saveSettings(const char *str, Settings *s);
