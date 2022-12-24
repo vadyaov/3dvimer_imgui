@@ -2,7 +2,6 @@
 
 void parseobj(const char *filename, model *m) {
   initModel(m);
-  /* printf("path=%s\nstrlen=%zu\n", filename, strlen(filename)); */
   FILE *file = fopen(filename, "r");
 
   if (file) {
@@ -13,7 +12,8 @@ void parseobj(const char *filename, model *m) {
     size_t v_size = 3 * m->vertexNumber;
     
     float *vertices = (float *)calloc(v_size, sizeof(float));
-    /* CHECK MEMORY */
+    if (!vertices)
+      exit(1);
 
     int *mainIndexArray = NULL;
     int *edgeIndexArray = NULL;
@@ -41,7 +41,6 @@ void parseobj(const char *filename, model *m) {
           m->vertexArray[i + j] = vertices[(mainIndexArray[k] - 1) * 3 + j];
     }
 
-    /* printf("m->lineIndex = %zu\n", m->lineIndex); */
     m->linesArray = (float *)calloc(m->lineIndex * 3, sizeof(float));
     if (m->linesArray)
     for (size_t i = 0, k = 0; k < m->lineIndex; i += 3, k++)
@@ -72,8 +71,6 @@ void parseobj(const char *filename, model *m) {
     free(mainIndexArray);
     free(edgeIndexArray);
     fclose(file);
-  } else {
-    printf("AAAAA");
   }
 }
 
@@ -101,7 +98,6 @@ void count(FILE *file, size_t *vertexNumber, size_t *indexNumber) {
   fseek(file, 0, SEEK_SET);
 }
 
- /* ONLY 3 or 4 idx in one face! */
 int parse(FILE *file, float *v, int **f, int **fl, model *m) {
   int errMark = 0;
   char *line = NULL;
@@ -117,8 +113,6 @@ int parse(FILE *file, float *v, int **f, int **fl, model *m) {
       size_t spcs = spaceNum(line + k);
       size_t mm = 0;
 
-      /* printf("spaces = %zu\nstart = %zu\n", spcs, start); */
-
       if (!errMark && spcs > 1) {
         m->allIndex += (spcs - 1) * 3;
         m->lineIndex += (spcs + 1) * 2;
@@ -126,21 +120,22 @@ int parse(FILE *file, float *v, int **f, int **fl, model *m) {
         m->lineIndex += 2;
         errMark = 1;
       }
-      /* printf("all:%zu\tline%zu\n", m->allIndex, m->lineIndex); */
-      if (!errMark)
-        *f = (int *)realloc(*f, m->allIndex * sizeof(int));
-      *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
 
-      // DONT FORGET TO CHECK MEMORY!!! //
+      if (!errMark) {
+        *f = (int *)realloc(*f, m->allIndex * sizeof(int));
+        if (!f) {
+          if (fl) free(fl);
+          exit(1);
+        }
+      }
+      *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
+      if (!fl) {
+        if (f) free(f);
+        exit(1);
+      }
 
       while (line[k] != '\0') {
         int cur = toInt(line + k, &k);
-        /* printf("J = %zu\t j - start = %zu\n", j, j - start); */
-        /* printf("Line:%s\n", line); */
-
-        /* printf("P = %zu\t p - start = %zu\n", p, p - startp); */
-        /* printf("Line:%s\n", line); */
-
         if (!errMark) {
           if ((j - startj) == 3) {
             (*f)[j] = (*f)[j - 1];
@@ -159,6 +154,7 @@ int parse(FILE *file, float *v, int **f, int **fl, model *m) {
         }
 
         (*fl)[p++] = cur;
+
         if (!errMark) {
           if ((p - startp) % 2 == 0 && p > 0) {
             (*fl)[p] = (*fl)[p - 1];
