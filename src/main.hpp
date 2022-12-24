@@ -6,16 +6,14 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 #include <GL/glew.h>
-#include <glm/glm.hpp>
 #include <GLFW/glfw3.h> // will drag system opengl headers
 
 extern "C" {
-#include "parseobj/parseobj.h"
-#include "affinity/affinity.h"
+#include "core/parseobj.h"
+#include "core/affinity.h"
 }
 
 #include "shaders/glshader.hpp"
-#include "affinity/affinity.h"
 #include <iostream>
 #include <fstream>
 
@@ -59,3 +57,4 @@ void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint sh
 void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int linewidth);
 void cleanFile(const char *str);
 void saveSettings(const char *str, Settings *s);
+void ImGuiSettingsWindow(Settings& s, model *m, ImGui::FileBrowser& fileDialog);

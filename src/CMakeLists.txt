@@ -7,16 +7,19 @@ set(CMAKE_VERBOSE_MAKEFILE 1)
 set(APP_VERSION_MAJOR 1)
 set(APP_VERSION_MINOR 0)
 
-set(APP_TARGET vimerApp.app)
+set(APP_TARGET vimer.app)
 
 
 add_subdirectory(imgui)
-add_subdirectory(parseobj)
-add_subdirectory(shaders)
-add_subdirectory(affinity)
+#add_subdirectory(core)
+#add_subdirectory(shaders)
 include_directories(${PROJECT_SOURCE_DIR})
-add_executable(${APP_TARGET} main.cpp)
-target_link_libraries(${APP_TARGET} imgui parseobj shader affinity)
+add_executable(${APP_TARGET}
+  core/affinity.c
+  core/parseobj.c
+  shaders/glshader.cpp
+  main.cpp)
+target_link_libraries(${APP_TARGET} imgui)
 
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})

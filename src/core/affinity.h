@@ -1,7 +1,7 @@
 #ifndef _SRC_AFFINITY_H
 #define _SRC_AFFINITY_H
 
-#include "../parseobj/parseobj.h"
+#include "parseobj.h"
 
 void move(model *m, double x, double y, double z);
 void _move(float *array, size_t size, double x, double y, double z);

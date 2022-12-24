@@ -116,118 +116,8 @@ int main(int, char**) {
     }
 
     glDisableVertexAttribArray(0);
+    ImGuiSettingsWindow(s, &m, fileDialog);
 
-    {
-      ImGui::Begin("Settings");
-      if (ImGui::Button("Browse obj"))
-        fileDialog.Open();
-
-      ImGui::SameLine();
-      ImGui::RadioButton("Dark", &s.scheme, 0); ImGui::SameLine();
-      ImGui::RadioButton("Light", &s.scheme, 1);
-      if (!s.scheme)
-       ImGui::StyleColorsDark();
-      else
-        ImGui::StyleColorsLight();
-
-      ImGui::Text("File:%s", s.filenamePtr);
-      ImGui::Text("Model:%s", s.modelnamePtr);
-      ImGui::Text("Vertex:%zu", m.vertexNumber);
-      ImGui::SameLine();
-      ImGui::Text("\t\tIndex:%zu", m.indexNumber);
-
-      ImGui::Separator();
-
-      ImGui::SliderFloat("Zoom", &s.zoom, 200.0f, 1.0f);
-
-      ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
-      if (s.addScale < 0) s.addScale = -1 / s.addScale;
-      if (ImGui::Button("ScaleX"))
-        scale(&m, s.addScale, 1, 1);
-      ImGui::SameLine();
-      if (ImGui::Button("ScaleY"))
-        scale(&m, 1, s.addScale, 1);
-      ImGui::SameLine();
-      if (ImGui::Button("ScaleZ"))
-        scale(&m, 1, 1, s.addScale);
-
-      ImGui::Separator();
-
-      ImGui::SliderFloat("Move range", &s.moveRange, 0.0f, 10.0f);
-      ImGui::PushButtonRepeat(true);
-      if (ImGui::ArrowButton("##left", ImGuiDir_Left))
-        move(&m, -s.moveRange, 0, 0);
-      ImGui::SameLine();
-      if (ImGui::ArrowButton("##right", ImGuiDir_Right))
-        move(&m, s.moveRange, 0, 0);
-      ImGui::SameLine();
-      if (ImGui::ArrowButton("##up", ImGuiDir_Up))
-        move(&m, 0, s.moveRange, 0);
-      ImGui::SameLine();
-      if (ImGui::ArrowButton("##down", ImGuiDir_Down))
-        move(&m, 0, -s.moveRange, 0);
-      ImGui::SameLine();
-      if (ImGui::Button("Farther(-Z)"))
-        move(&m, 0, 0, -s.moveRange);
-      ImGui::SameLine();
-      if (ImGui::Button("Closer(+Z)"))
-        move(&m, 0, 0, s.moveRange);
-      ImGui::PopButtonRepeat();
-
-      ImGui::Separator();
-
-      ImGui::SliderAngle("Angle", &s.angle);
-      ImGui::PushButtonRepeat(true);
-      if (ImGui::Button("RotateX"))
-        rotate(&m, s.angle, 'x');
-      ImGui::SameLine();
-      if (ImGui::Button("RotateY"))
-        rotate(&m, s.angle, 'y');
-      ImGui::SameLine();
-      if (ImGui::Button("RotateZ"))
-        rotate(&m, s.angle, 'z');
-      ImGui::PopButtonRepeat();
-
-      ImGui::Separator();
-
-      if (ImGui::Button("RESET ALL")) {
-        free(m.vertexArray);
-        free(m.linesArray);
-        parseobj(s.path.c_str(), &m);
-      }
-      ImGui::SameLine(); HelpMarker("Resets the position, scale, rotation");
-
-      ImGui::ColorEdit3("Background color", (float*)&s.clear_color);
-      ImGui::ColorEdit3("Vertex color", (float*)&s.vertex_color);
-      ImGui::ColorEdit3("Edge color", (float*)&s.edge_color);
-
-      ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
-      ImGui::SameLine(); HelpMarker("CTRL + click to input value");
-
-      ImGui::Checkbox("Triangles", &s.triangles);
-      ImGui::SameLine();
-      ImGui::Checkbox("Lines", &s.lines);
-
-      ImGui::RadioButton("Ortho", &s.perspective, 0); ImGui::SameLine();
-      ImGui::RadioButton("Perspective", &s.perspective, 1);
-
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-      ImGui::End();
-    }
-
-    fileDialog.Display();
-
-    if (fileDialog.HasSelected()) {
-      s.path = fileDialog.GetSelected();
-      s.filename = getFilename(s.path);
-      s.filenamePtr = s.filename.c_str();
-      free(m.vertexArray);
-      free(m.linesArray);
-      if (m.name) free(m.name);
-      parseobj(s.path.c_str(), &m);
-      s.modelnamePtr = m.name;
-      fileDialog.ClearSelected();
-    }
 
     // Rendering
     render(s.clear_color, window);
@@ -402,4 +292,117 @@ void saveSettings(const char *str, Settings *s) {
     fprintf(fp, "%d\n", s->perspective);
     fclose(fp);
   }
+}
+
+void ImGuiSettingsWindow(Settings& s, model *m, ImGui::FileBrowser& fileDialog) {
+  ImGui::Begin("Settings");
+  if (ImGui::Button("Browse obj"))
+    fileDialog.Open();
+
+  ImGui::SameLine();
+  ImGui::RadioButton("Dark", &s.scheme, 0); ImGui::SameLine();
+  ImGui::RadioButton("Light", &s.scheme, 1);
+  if (!s.scheme)
+   ImGui::StyleColorsDark();
+  else
+    ImGui::StyleColorsLight();
+
+  ImGui::Text("File:%s", s.filenamePtr);
+  ImGui::Text("Model:%s", s.modelnamePtr);
+  ImGui::Text("Vertex:%zu", m->vertexNumber);
+  ImGui::SameLine();
+  ImGui::Text("\t\tIndex:%zu", m->indexNumber);
+
+  ImGui::Separator();
+
+  ImGui::SliderFloat("Zoom", &s.zoom, 200.0f, 1.0f);
+
+  ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
+  if (s.addScale < 0) s.addScale = -1 / s.addScale;
+  if (ImGui::Button("ScaleX"))
+    scale(m, s.addScale, 1, 1);
+  ImGui::SameLine();
+  if (ImGui::Button("ScaleY"))
+    scale(m, 1, s.addScale, 1);
+  ImGui::SameLine();
+  if (ImGui::Button("ScaleZ"))
+    scale(m, 1, 1, s.addScale);
+
+  ImGui::Separator();
+
+  ImGui::SliderFloat("Move range", &s.moveRange, 0.0f, 10.0f);
+  ImGui::PushButtonRepeat(true);
+  if (ImGui::ArrowButton("##left", ImGuiDir_Left))
+    move(m, -s.moveRange, 0, 0);
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##right", ImGuiDir_Right))
+    move(m, s.moveRange, 0, 0);
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##up", ImGuiDir_Up))
+    move(m, 0, s.moveRange, 0);
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##down", ImGuiDir_Down))
+    move(m, 0, -s.moveRange, 0);
+  ImGui::SameLine();
+  if (ImGui::Button("Farther(-Z)"))
+    move(m, 0, 0, -s.moveRange);
+  ImGui::SameLine();
+  if (ImGui::Button("Closer(+Z)"))
+    move(m, 0, 0, s.moveRange);
+  ImGui::PopButtonRepeat();
+
+  ImGui::Separator();
+
+  ImGui::SliderAngle("Angle", &s.angle);
+  ImGui::PushButtonRepeat(true);
+  if (ImGui::Button("RotateX"))
+    rotate(m, s.angle, 'x');
+  ImGui::SameLine();
+  if (ImGui::Button("RotateY"))
+    rotate(m, s.angle, 'y');
+  ImGui::SameLine();
+  if (ImGui::Button("RotateZ"))
+    rotate(m, s.angle, 'z');
+  ImGui::PopButtonRepeat();
+
+  ImGui::Separator();
+
+  if (ImGui::Button("RESET ALL")) {
+    free(m->vertexArray);
+    free(m->linesArray);
+    parseobj(s.path.c_str(), m);
+  }
+  ImGui::SameLine(); HelpMarker("Resets the position, scale, rotation");
+
+  ImGui::ColorEdit3("Background color", (float*)&s.clear_color);
+  ImGui::ColorEdit3("Vertex color", (float*)&s.vertex_color);
+  ImGui::ColorEdit3("Edge color", (float*)&s.edge_color);
+
+  ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
+  ImGui::SameLine(); HelpMarker("CTRL + click to input value");
+
+  ImGui::Checkbox("Triangles", &s.triangles);
+  ImGui::SameLine();
+  ImGui::Checkbox("Lines", &s.lines);
+
+  ImGui::RadioButton("Ortho", &s.perspective, 0); ImGui::SameLine();
+  ImGui::RadioButton("Perspective", &s.perspective, 1);
+
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::End();
+
+  fileDialog.Display();
+
+  if (fileDialog.HasSelected()) {
+    s.path = fileDialog.GetSelected();
+    s.filename = getFilename(s.path);
+    s.filenamePtr = s.filename.c_str();
+    free(m->vertexArray);
+    free(m->linesArray);
+    if (m->name) free(m->name);
+    parseobj(s.path.c_str(), m);
+    s.modelnamePtr = m->name;
+    fileDialog.ClearSelected();
+  }
+
 }
