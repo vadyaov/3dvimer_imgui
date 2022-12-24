@@ -45,6 +45,7 @@ typedef struct ProgramState {
   const char *modelnamePtr;
 
   int scheme;
+  int perspective;
 } Settings;
 
 std::string getFilename(std::string& path);

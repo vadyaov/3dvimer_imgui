@@ -38,6 +38,9 @@ int main(int, char**) {
   if (glewInit() != GLEW_OK)
     return 1;
 
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+
   // Setup dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -73,9 +76,6 @@ int main(int, char**) {
   GLuint linesVBO;
   glGenBuffers(1, &linesVBO);
 
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
-
   // Main loop
   while (!glfwWindowShouldClose(window)) {
     glClearColor(s.clear_color.x * s.clear_color.w, s.clear_color.y * s.clear_color.w,
@@ -87,9 +87,21 @@ int main(int, char**) {
     startFrame();
 
     glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection = glm::perspective(glm::radians(50.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 500.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -s.zoom));
+    /* glm::mat4 view = glm::mat4(1.0f); */
+    glm::mat4 projection;
+
+    glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, s.zoom);
+    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+
+    if (s.perspective) {
+      projection = glm::perspective(glm::radians(50.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 500.0f);
+      /* view = glm::translate(view, glm::vec3(0.0f, 0.0f, -s.zoom)); */
+    } else {
+      projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 500.0f);
+    }
 
     if (s.triangles) {
       makeMVP(model, view, projection, shaderProgram);
@@ -126,7 +138,7 @@ int main(int, char**) {
 
       ImGui::Separator();
 
-      ImGui::SliderFloat("Zoom", &s.zoom, 200.0f, 5.0f);
+      ImGui::SliderFloat("Zoom", &s.zoom, 200.0f, 1.0f);
 
       ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
       if (s.addScale < 0) s.addScale = -1 / s.addScale;
@@ -195,6 +207,9 @@ int main(int, char**) {
       ImGui::Checkbox("Triangles", &s.triangles);
       ImGui::SameLine();
       ImGui::Checkbox("Lines", &s.lines);
+
+      ImGui::RadioButton("Ortho", &s.perspective, 0); ImGui::SameLine();
+      ImGui::RadioButton("Perspective", &s.perspective, 1);
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
@@ -287,7 +302,7 @@ void initSettings(Settings *s) {
     size_t len = 0;
     size_t i = 0;
     float r = 0.0f, g = 0.0f, b = 0.0f, w = 0.0f;
-    while (i < 12) {
+    while (i < 13) {
       getline(&line, &len, f);
       if (0 == i) {
         s->zoom = std::atof(line);
@@ -325,6 +340,11 @@ void initSettings(Settings *s) {
           s->filenamePtr = s->filename.c_str();
       } else if (i == 11) {
         s->scheme = atoi(line);
+      } else if (i == 12) {
+        if (std::atoi(line) == 1)
+          s->perspective = true;
+        else
+          s->perspective = false;
       }
       i++;
     }
@@ -379,6 +399,7 @@ void saveSettings(const char *str, Settings *s) {
     fprintf(fp, "%f %f %f %f\n", s->edge_color.x, s->edge_color.y, s->edge_color.z, s->edge_color.w);
     fprintf(fp, "%s\n", s->path.c_str());
     fprintf(fp, "%d\n", s->scheme);
+    fprintf(fp, "%d\n", s->perspective);
     fclose(fp);
   }
 }
