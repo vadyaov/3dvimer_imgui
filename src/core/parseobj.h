@@ -17,6 +17,7 @@ typedef struct {
   size_t vertexNumber;
   size_t indexNumber;
   size_t allIndex, lineIndex;
+  int edges;
 } model;
 
 void parseobj(const char *filename, model *m);

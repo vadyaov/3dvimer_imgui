@@ -5,8 +5,8 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h> // will drag system opengl headers
+#include </Users/neelyarl/.brew/opt/glew/include/GL/glew.h>
+#include </Users/neelyarl/.brew/opt/glfw/include/GLFW/glfw3.h> // will drag system opengl headers
 
 extern "C" {
 #include "core/parseobj.h"
@@ -17,9 +17,11 @@ extern "C" {
 #include <iostream>
 #include <fstream>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include </Users/neelyarl/.brew/opt/glm/include/glm/glm.hpp>
+#include </Users/neelyarl/.brew/opt/glm/include/glm/gtc/matrix_transform.hpp>
+#include </Users/neelyarl/.brew/opt/glm/include/glm/gtc/type_ptr.hpp>
+
+#include "FreeImage.h"
 
 #define GL_SILENCE_DEPRECATION
 #define SCREEN_WIDTH 1280.0f

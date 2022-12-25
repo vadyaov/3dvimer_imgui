@@ -6,7 +6,7 @@ void parseobj(const char *filename, model *m) {
 
   if (file) {
     count(file, &m->vertexNumber, &m->indexNumber);
-
+    m->edges = m->vertexNumber + m->indexNumber - 2;
     /* printf("v:%zu\tf:%zu\n", m->vertexNumber, m->indexNumber); */
 
     size_t v_size = 3 * m->vertexNumber;
@@ -82,6 +82,7 @@ void initModel(model *m) {
   m->indexNumber = 0;
   m->allIndex = 0;
   m->lineIndex = 0;
+  m->edges = 0;
 }
 
 void count(FILE *file, size_t *vertexNumber, size_t *indexNumber) {
@@ -116,7 +117,7 @@ int parse(FILE *file, float *v, int **f, int **fl, model *m) {
       if (!errMark && spcs > 1) {
         m->allIndex += (spcs - 1) * 3;
         m->lineIndex += (spcs + 1) * 2;
-      } else {
+      } else if (spcs == 1) {
         m->lineIndex += 2;
         errMark = 1;
       }

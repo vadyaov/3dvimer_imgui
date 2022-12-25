@@ -1,11 +1,11 @@
 #include "affinity.h"
 
-void move(model *m, double x, double y, double z) {
+void move(model *m, float x, float y, float z) {
   _move(m->vertexArray, m->allIndex * 3, x, y, z);
   _move(m->linesArray, m->lineIndex * 3, x, y, z);
 }
 
-void _move(float *array, size_t size, double x, double y, double z) {
+void _move(float *array, size_t size, float x, float y, float z) {
   for (size_t i = 0; i < size; i += 3) {
     array[i] += x;
     array[i + 1] += y;
@@ -13,13 +13,12 @@ void _move(float *array, size_t size, double x, double y, double z) {
   }
 }
 
-// angle in degrees!
-void rotate(model *m, double angle, char axis) {
+void rotate(model *m, float angle, char axis) {
   _rotate(m->vertexArray, angle, m->allIndex * 3, axis);
   _rotate(m->linesArray, angle, m->lineIndex * 3, axis);
 }
 
-void _rotate(float *array, double angle, size_t size, char axis) {
+void _rotate(float *array, float angle, size_t size, char axis) {
   for (size_t i = 0; i < size; i += 3) {
     float x = array[i];
     float y = array[i + 1];
@@ -37,13 +36,12 @@ void _rotate(float *array, double angle, size_t size, char axis) {
   }
 }
 
-// if need scale only in one axis --> other coeff = 1
-void scale(model *m, double xs, double ys, double zs) {
+void scale(model *m, float xs, float ys, float zs) {
   _scale(m->vertexArray, m->allIndex * 3, xs, ys, zs);
   _scale(m->linesArray, m->lineIndex * 3, xs, ys, zs);
 }
 
-void _scale(float *array, size_t size, double xs, double ys, double zs) {
+void _scale(float *array, size_t size, float xs, float ys, float zs) {
   for(size_t i = 0; i < size; i += 3) {
     array[i] *= xs;
     array[i + 1] *= ys;

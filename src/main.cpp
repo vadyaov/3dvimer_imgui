@@ -309,9 +309,11 @@ void ImGuiSettingsWindow(Settings& s, model *m, ImGui::FileBrowser& fileDialog) 
 
   ImGui::Text("File:%s", s.filenamePtr);
   ImGui::Text("Model:%s", s.modelnamePtr);
-  ImGui::Text("Vertex:%zu", m->vertexNumber);
-  ImGui::SameLine();
-  ImGui::Text("\t\tIndex:%zu", m->indexNumber);
+  ImGui::Text("Vertex:%zu", m->vertexNumber);ImGui::SameLine();
+  ImGui::Text("\tIndex:%zu", m->indexNumber);ImGui::SameLine();
+  ImGui::Text("\tEdges:%d", m->edges);ImGui::SameLine();
+  HelpMarker("Include joint edjes of 2 triangles");
+
 
   ImGui::Separator();
 
@@ -387,6 +389,19 @@ void ImGuiSettingsWindow(Settings& s, model *m, ImGui::FileBrowser& fileDialog) 
 
   ImGui::RadioButton("Ortho", &s.perspective, 0); ImGui::SameLine();
   ImGui::RadioButton("Perspective", &s.perspective, 1);
+
+  if (ImGui::Button(".bmp")) {
+    BYTE* pixels = new BYTE[3 * SCREEN_WIDTH * SCREEN_HEIGHT];
+    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    //
+    // Convert to FreeImage format & save to file
+    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, SCREEN_WIDTH, SCREEN_HEIGHT, 3 * SCREEN_WIDTH, 24, 0x0000FF, 0xFF0000, 0x00FF00, false);
+    FreeImage_Save(FIF_BMP, image, "C:/test.bmp", 0);
+
+    // Free resources
+    FreeImage_Unload(image);
+    delete [] pixels;
+  }
 
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
