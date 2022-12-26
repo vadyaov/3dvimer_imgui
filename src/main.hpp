@@ -21,11 +21,12 @@ extern "C" {
 #include </Users/neelyarl/.brew/opt/glm/include/glm/gtc/matrix_transform.hpp>
 #include </Users/neelyarl/.brew/opt/glm/include/glm/gtc/type_ptr.hpp>
 
-#include "FreeImage.h"
+//#include </Users/neelyarl/.brew/Cellar/sdl2/2.26.1/include/SDL2/SDL.h>
+#include </Users/neelyarl/.brew/Cellar/sdl2/2.26.1/include/SDL2/SDL_surface.h>
 
 #define GL_SILENCE_DEPRECATION
-#define SCREEN_WIDTH 1280.0f
-#define SCREEN_HEIGHT 720.0f
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
 
 typedef struct ProgramState {
   float zoom;
@@ -46,6 +47,8 @@ typedef struct ProgramState {
 
   int scheme;
   int perspective;
+
+  bool jpeg, bmp;
 } Settings;
 
 std::string getFilename(std::string& path);
@@ -59,4 +62,4 @@ void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint sh
 void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int linewidth);
 void cleanFile(const char *str);
 void saveSettings(const char *str, Settings *s);
-void ImGuiSettingsWindow(Settings& s, model *m, ImGui::FileBrowser& fileDialog);
+void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileBrowser& fileDialog);

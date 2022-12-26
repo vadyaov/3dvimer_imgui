@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.7)
 project(Vimer.1)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -9,10 +9,7 @@ set(APP_VERSION_MINOR 0)
 
 set(APP_TARGET vimer.app)
 
-
 add_subdirectory(imgui)
-#add_subdirectory(core)
-#add_subdirectory(shaders)
 include_directories(${PROJECT_SOURCE_DIR})
 add_executable(${APP_TARGET}
   core/affinity.c
@@ -45,14 +42,11 @@ include_directories(${GLEW_INCLUDE_DIRS})
     SET(EXTRA_LIBS ${OpenGL_LIBRARY})
 # endif (APPLE)
 
-if (WIN32)
-# nothing now
-endif (WIN32)
-
 target_link_libraries(
         ${APP_TARGET}
         glfw
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
         ${EXTRA_LIBS}
+        ${SDL2_LIBRARIES}
 )

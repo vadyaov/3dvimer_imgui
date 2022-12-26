@@ -97,7 +97,7 @@ int main(int, char**) {
     glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
 
     if (s.perspective) {
-      projection = glm::perspective(glm::radians(50.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f, 500.0f);
+      projection = glm::perspective(glm::radians(50.0f), (float) SCREEN_WIDTH / (float) SCREEN_HEIGHT, 0.1f, 500.0f);
       /* view = glm::translate(view, glm::vec3(0.0f, 0.0f, -s.zoom)); */
     } else {
       projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 500.0f);
@@ -116,7 +116,7 @@ int main(int, char**) {
     }
 
     glDisableVertexAttribArray(0);
-    ImGuiSettingsWindow(s, &m, fileDialog);
+    ImGuiSettingsWindow(window, s, &m, fileDialog);
 
 
     // Rendering
@@ -192,7 +192,7 @@ void initSettings(Settings *s) {
     size_t len = 0;
     size_t i = 0;
     float r = 0.0f, g = 0.0f, b = 0.0f, w = 0.0f;
-    while (i < 13) {
+    while (i < 15) {
       getline(&line, &len, f);
       if (0 == i) {
         s->zoom = std::atof(line);
@@ -235,6 +235,14 @@ void initSettings(Settings *s) {
           s->perspective = true;
         else
           s->perspective = false;
+      } else if (i == 13) {
+        if (std::atoi(line) == 1)
+          s->bmp = true;
+        else s->bmp = false;
+      } else if (i == 14) {
+        if (std::atoi(line) == 1)
+          s->jpeg = true;
+        else s->jpeg = false;
       }
       i++;
     }
@@ -290,11 +298,13 @@ void saveSettings(const char *str, Settings *s) {
     fprintf(fp, "%s\n", s->path.c_str());
     fprintf(fp, "%d\n", s->scheme);
     fprintf(fp, "%d\n", s->perspective);
+    fprintf(fp, "%d\n", s->bmp);
+    fprintf(fp, "%d\n", s->jpeg);
     fclose(fp);
   }
 }
 
-void ImGuiSettingsWindow(Settings& s, model *m, ImGui::FileBrowser& fileDialog) {
+void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileBrowser& fileDialog) {
   ImGui::Begin("Settings");
   if (ImGui::Button("Browse obj"))
     fileDialog.Open();
@@ -390,18 +400,29 @@ void ImGuiSettingsWindow(Settings& s, model *m, ImGui::FileBrowser& fileDialog) 
   ImGui::RadioButton("Ortho", &s.perspective, 0); ImGui::SameLine();
   ImGui::RadioButton("Perspective", &s.perspective, 1);
 
-  if (ImGui::Button(".bmp")) {
-    BYTE* pixels = new BYTE[3 * SCREEN_WIDTH * SCREEN_HEIGHT];
-    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    //
-    // Convert to FreeImage format & save to file
-    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, SCREEN_WIDTH, SCREEN_HEIGHT, 3 * SCREEN_WIDTH, 24, 0x0000FF, 0xFF0000, 0x00FF00, false);
-    FreeImage_Save(FIF_BMP, image, "C:/test.bmp", 0);
+  if (ImGui::Button("ScreenShot")) {
+    int height = 0;
+    int width = 0;
+    glfwGetFramebufferSize(window, &width, &height);
 
-    // Free resources
-    FreeImage_Unload(image);
-    delete [] pixels;
+    SDL_Surface * temp = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, 0x000000FF, 0x0000FF00, 0x00FF0000, 0);
+    if (temp == NULL)
+      glfw_error_callback(1, "CreateRGBSurface failed");
+
+    unsigned char pixels[width * height * 3];
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    for (int i = 0 ; i < height ; i++)
+      std::memcpy( ((char *) temp->pixels) + temp->pitch * i, pixels + 3 * width * (height - i - 1), width * 3);
+    if (s.bmp)
+      SDL_SaveBMP(temp, "ScreenShot.bmp");
+    if (s.jpeg)
+      SDL_SaveBMP(temp, "ScreenShot.jpeg");
+    SDL_FreeSurface(temp);
   }
+  ImGui::SameLine();
+  ImGui::Checkbox("BMP", &s.bmp);
+  ImGui::SameLine();
+  ImGui::Checkbox("JPEG", &s.jpeg);
 
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
