@@ -51,6 +51,12 @@ typedef struct ProgramState {
   bool jpeg, bmp;
 } Settings;
 
+typedef struct cameraSettings {
+    glm::vec3 cameraPos;
+    glm::vec3 cameraFront;
+    glm::vec3 cameraUp;
+} Camera;
+
 std::string getFilename(std::string& path);
 void render(ImVec4 &clear_color, GLFWwindow* window);
 void startFrame();

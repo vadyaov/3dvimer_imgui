@@ -410,9 +410,9 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileB
   ImGui::RadioButton("Ortho", &s.perspective, 0); ImGui::SameLine();
   ImGui::RadioButton("Perspective", &s.perspective, 1);
 
-  if (ImGui::Button("ScreenShot")) {
+  if (ImGui::Button("ScreenShot"))
     makeScreenShot(window, s);
-  }
+
   ImGui::SameLine();
   ImGui::Checkbox("BMP", &s.bmp);
   ImGui::SameLine();

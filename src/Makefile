@@ -6,7 +6,7 @@ RM := rm -f
 MK := mkdir -p
 
 EXEC := vimer.app
-ARCHIVE := $(CURR_DIR)/$(EXEC)
+ARCHIVE := $(CURR_DIR)/vimer
 
 all: tests install run
 
@@ -31,25 +31,29 @@ dvi:
 	open ./manual/index.html
 
 create_dirs:
-	# @$(RM) -r $(ARCHIVE)
-	# @$(MK) $(ARCHIVE)
-	# @$(MK) $(ARCHIVE)/src
-	# @$(MK) $(ARCHIVE)/src/gui
-	# @$(MK) $(ARCHIVE)/src/gui/pic
-	# @$(MK) $(ARCHIVE)/src/calclogic
-	# @$(MK) $(ARCHIVE)/src/calclogic/tests
+	@$(RM) -r $(ARCHIVE)
+	@$(MK) $(ARCHIVE)
+	@$(MK) $(ARCHIVE)/src
+	@$(MK) $(ARCHIVE)/src/core
+	@$(MK) $(ARCHIVE)/src/imgui
+	@$(MK) $(ARCHIVE)/src/shaders
+	@$(MK) $(ARCHIVE)/src/models
+	@$(MK) $(ARCHIVE)/src/core/tests
 
 cpy_files:
-	# cp CMakeLists.txt $(ARCHIVE)/src
-	# cp documentation.texi $(ARCHIVE)/src
-	# cp Makefile $(ARCHIVE)/src
-	# cp $(CURR_DIR)/calclogic/*c $(ARCHIVE)/src/calclogic
-	# cp $(CURR_DIR)/calclogic/*h $(ARCHIVE)/src/calclogic
-	# cp $(CURR_DIR)/calclogic/Makefile $(ARCHIVE)/src/calclogic
-	# cp $(CURR_DIR)/calclogic/tests/* $(ARCHIVE)/src/calclogic/tests
-	# cp $(CURR_DIR)/gui/*.cpp $(ARCHIVE)/src/gui
-	# cp $(CURR_DIR)/gui/*.h $(ARCHIVE)/src/gui
-	# cp $(CURR_DIR)/gui/pic/* $(ARCHIVE)/src/gui/pic
+	cp CMakeLists.txt $(ARCHIVE)/src
+	cp documentation.texi $(ARCHIVE)/src
+	cp Makefile $(ARCHIVE)/src
+	cp main.cpp $(ARCHIVE)/src
+	cp main.hpp $(ARCHIVE)/src
+	cp savefile.vimer $(ARCHIVE)/src
+	cp $(CURR_DIR)/core/*c $(ARCHIVE)/src/core
+	cp $(CURR_DIR)/core/*h $(ARCHIVE)/src/core
+	cp $(CURR_DIR)/core/Makefile $(ARCHIVE)/src/core
+	cp $(CURR_DIR)/core/tests/* $(ARCHIVE)/src/core/tests
+	cp $(CURR_DIR)/imgui/* $(ARCHIVE)/src/imgui
+	cp $(CURR_DIR)/models/* $(ARCHIVE)/src/models
+	cp $(CURR_DIR)/shaders/* $(ARCHIVE)/src/shaders
 
 tests:
 	@cd $(LOGIC_DIR) ; make test ; cd ./..
@@ -60,3 +64,4 @@ gcov_report:
 clean: uninstall
 	@cd $(LOGIC_DIR) ; make clean ; cd ./..
 	@$(RM) -r manual/
+	@$(RM) imgui.ini
