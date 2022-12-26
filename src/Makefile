@@ -63,5 +63,5 @@ gcov_report:
 
 clean: uninstall
 	@cd $(LOGIC_DIR) ; make clean ; cd ./..
-	@$(RM) -r manual/
+	@$(RM) -r documentation/
 	@$(RM) imgui.ini
