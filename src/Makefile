@@ -65,3 +65,5 @@ clean: uninstall
 	@cd $(LOGIC_DIR) ; make clean ; cd ./..
 	@$(RM) -r documentation/
 	@$(RM) imgui.ini
+	@$(RM) ScreenShot.jpeg
+	@$(RM) ScreenShot.bmp
