@@ -63,3 +63,4 @@ void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int li
 void cleanFile(const char *str);
 void saveSettings(const char *str, Settings *s);
 void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileBrowser& fileDialog);
+void makeScreenShot(GLFWwindow *window, Settings& s);

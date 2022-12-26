@@ -1,5 +1,74 @@
 #include "main.hpp"
 
+static void ImGui_Scale(model *m, Settings& s) {
+  ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
+  if (s.addScale < 0) s.addScale = -1 / s.addScale;
+  if (ImGui::Button("ScaleX"))
+    scale(m, s.addScale, 1, 1);
+  ImGui::SameLine();
+  if (ImGui::Button("ScaleY"))
+    scale(m, 1, s.addScale, 1);
+  ImGui::SameLine();
+  if (ImGui::Button("ScaleZ"))
+    scale(m, 1, 1, s.addScale);
+}
+
+static void ImGui_Move(model *m, Settings& s) {
+  ImGui::SliderFloat("Move range", &s.moveRange, 0.0f, 10.0f);
+  ImGui::PushButtonRepeat(true);
+  if (ImGui::ArrowButton("##left", ImGuiDir_Left))
+    move(m, -s.moveRange, 0, 0);
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##right", ImGuiDir_Right))
+    move(m, s.moveRange, 0, 0);
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##up", ImGuiDir_Up))
+    move(m, 0, s.moveRange, 0);
+  ImGui::SameLine();
+  if (ImGui::ArrowButton("##down", ImGuiDir_Down))
+    move(m, 0, -s.moveRange, 0);
+  ImGui::SameLine();
+  if (ImGui::Button("Farther(-Z)"))
+    move(m, 0, 0, -s.moveRange);
+  ImGui::SameLine();
+  if (ImGui::Button("Closer(+Z)"))
+    move(m, 0, 0, s.moveRange);
+  ImGui::PopButtonRepeat();
+}
+
+static void ImGui_Rotate(model *m, Settings&s) {
+  ImGui::SliderAngle("Angle", &s.angle);
+  ImGui::PushButtonRepeat(true);
+  if (ImGui::Button("RotateX"))
+    rotate(m, s.angle, 'x');
+  ImGui::SameLine();
+  if (ImGui::Button("RotateY"))
+    rotate(m, s.angle, 'y');
+  ImGui::SameLine();
+  if (ImGui::Button("RotateZ"))
+    rotate(m, s.angle, 'z');
+  ImGui::PopButtonRepeat();
+}
+
+static void ImGui_ColorSceme(Settings& s) {
+  ImGui::SameLine();
+  ImGui::RadioButton("Dark", &s.scheme, 0); ImGui::SameLine();
+  ImGui::RadioButton("Light", &s.scheme, 1);
+  if (!s.scheme)
+   ImGui::StyleColorsDark();
+  else
+    ImGui::StyleColorsLight();
+}
+
+static void ImGui_Info(model *m, Settings& s) {
+  ImGui::Text("File:%s", s.filenamePtr);
+  ImGui::Text("Model:%s", s.modelnamePtr);
+  ImGui::Text("Vertex:%zu", m->vertexNumber);ImGui::SameLine();
+  ImGui::Text("\tIndex:%zu", m->indexNumber);ImGui::SameLine();
+  ImGui::Text("\tEdges:%d", m->edges);ImGui::SameLine();
+  HelpMarker("Include joint edjes of 2 triangles");
+}
+
 int main(int, char**) {
   
   glfwSetErrorCallback(glfw_error_callback);
@@ -309,74 +378,15 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileB
   if (ImGui::Button("Browse obj"))
     fileDialog.Open();
 
-  ImGui::SameLine();
-  ImGui::RadioButton("Dark", &s.scheme, 0); ImGui::SameLine();
-  ImGui::RadioButton("Light", &s.scheme, 1);
-  if (!s.scheme)
-   ImGui::StyleColorsDark();
-  else
-    ImGui::StyleColorsLight();
-
-  ImGui::Text("File:%s", s.filenamePtr);
-  ImGui::Text("Model:%s", s.modelnamePtr);
-  ImGui::Text("Vertex:%zu", m->vertexNumber);ImGui::SameLine();
-  ImGui::Text("\tIndex:%zu", m->indexNumber);ImGui::SameLine();
-  ImGui::Text("\tEdges:%d", m->edges);ImGui::SameLine();
-  HelpMarker("Include joint edjes of 2 triangles");
-
-
+  ImGui_ColorSceme(s);
+  ImGui_Info(m, s);
   ImGui::Separator();
-
   ImGui::SliderFloat("Zoom", &s.zoom, 200.0f, 1.0f);
-
-  ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
-  if (s.addScale < 0) s.addScale = -1 / s.addScale;
-  if (ImGui::Button("ScaleX"))
-    scale(m, s.addScale, 1, 1);
-  ImGui::SameLine();
-  if (ImGui::Button("ScaleY"))
-    scale(m, 1, s.addScale, 1);
-  ImGui::SameLine();
-  if (ImGui::Button("ScaleZ"))
-    scale(m, 1, 1, s.addScale);
-
+  ImGui_Scale(m, s);
   ImGui::Separator();
-
-  ImGui::SliderFloat("Move range", &s.moveRange, 0.0f, 10.0f);
-  ImGui::PushButtonRepeat(true);
-  if (ImGui::ArrowButton("##left", ImGuiDir_Left))
-    move(m, -s.moveRange, 0, 0);
-  ImGui::SameLine();
-  if (ImGui::ArrowButton("##right", ImGuiDir_Right))
-    move(m, s.moveRange, 0, 0);
-  ImGui::SameLine();
-  if (ImGui::ArrowButton("##up", ImGuiDir_Up))
-    move(m, 0, s.moveRange, 0);
-  ImGui::SameLine();
-  if (ImGui::ArrowButton("##down", ImGuiDir_Down))
-    move(m, 0, -s.moveRange, 0);
-  ImGui::SameLine();
-  if (ImGui::Button("Farther(-Z)"))
-    move(m, 0, 0, -s.moveRange);
-  ImGui::SameLine();
-  if (ImGui::Button("Closer(+Z)"))
-    move(m, 0, 0, s.moveRange);
-  ImGui::PopButtonRepeat();
-
+  ImGui_Move(m, s);
   ImGui::Separator();
-
-  ImGui::SliderAngle("Angle", &s.angle);
-  ImGui::PushButtonRepeat(true);
-  if (ImGui::Button("RotateX"))
-    rotate(m, s.angle, 'x');
-  ImGui::SameLine();
-  if (ImGui::Button("RotateY"))
-    rotate(m, s.angle, 'y');
-  ImGui::SameLine();
-  if (ImGui::Button("RotateZ"))
-    rotate(m, s.angle, 'z');
-  ImGui::PopButtonRepeat();
-
+  ImGui_Rotate(m, s);
   ImGui::Separator();
 
   if (ImGui::Button("RESET ALL")) {
@@ -401,23 +411,7 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileB
   ImGui::RadioButton("Perspective", &s.perspective, 1);
 
   if (ImGui::Button("ScreenShot")) {
-    int height = 0;
-    int width = 0;
-    glfwGetFramebufferSize(window, &width, &height);
-
-    SDL_Surface * temp = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, 0x000000FF, 0x0000FF00, 0x00FF0000, 0);
-    if (temp == NULL)
-      glfw_error_callback(1, "CreateRGBSurface failed");
-
-    unsigned char pixels[width * height * 3];
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    for (int i = 0 ; i < height ; i++)
-      std::memcpy( ((char *) temp->pixels) + temp->pitch * i, pixels + 3 * width * (height - i - 1), width * 3);
-    if (s.bmp)
-      SDL_SaveBMP(temp, "ScreenShot.bmp");
-    if (s.jpeg)
-      SDL_SaveBMP(temp, "ScreenShot.jpeg");
-    SDL_FreeSurface(temp);
+    makeScreenShot(window, s);
   }
   ImGui::SameLine();
   ImGui::Checkbox("BMP", &s.bmp);
@@ -428,7 +422,6 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileB
   ImGui::End();
 
   fileDialog.Display();
-
   if (fileDialog.HasSelected()) {
     s.path = fileDialog.GetSelected();
     s.filename = getFilename(s.path);
@@ -440,5 +433,24 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileB
     s.modelnamePtr = m->name;
     fileDialog.ClearSelected();
   }
+}
 
+void makeScreenShot(GLFWwindow *window, Settings& s) {
+  int height = 0;
+  int width = 0;
+  glfwGetFramebufferSize(window, &width, &height);
+
+  SDL_Surface * temp = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, 0x000000FF, 0x0000FF00, 0x00FF0000, 0);
+  if (temp == NULL)
+    glfw_error_callback(1, "CreateRGBSurface failed");
+
+  unsigned char pixels[width * height * 3];
+  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+  for (int i = 0 ; i < height ; i++)
+    std::memcpy( ((char *) temp->pixels) + temp->pitch * i, pixels + 3 * width * (height - i - 1), width * 3);
+  if (s.bmp)
+    SDL_SaveBMP(temp, "ScreenShot.bmp");
+  if (s.jpeg)
+    SDL_SaveBMP(temp, "ScreenShot.jpeg");
+  SDL_FreeSurface(temp);
 }
