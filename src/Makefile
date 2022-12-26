@@ -28,7 +28,7 @@ dist: create_dirs cpy_files
 
 dvi:
 	makeinfo documentation.texi --html
-	open ./manual/index.html
+	open ./documentation/index.html
 
 create_dirs:
 	@$(RM) -r $(ARCHIVE)

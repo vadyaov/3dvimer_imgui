@@ -23,16 +23,16 @@ void _rotate(float *array, float angle, size_t size, char axis) {
     float x = array[i];
     float y = array[i + 1];
     float z = array[i + 2];
-      if (axis == 'x') {
-        array[i + 1] = y * cos(angle) - z * sin(angle);
-        array[i + 2] = y * sin(angle) + z * cos(angle);
-      } else if (axis == 'y') {
-        array[i] = x * cos(angle) + z * sin(angle);
-        array[i + 2] = -x * sin(angle) + z * cos(angle);
-      } else if (axis == 'z') {
-        array[i] = x * cos(angle) - y * sin(angle);
-        array[i + 1] = x * sin(angle) + y * cos(angle);
-      }
+    if (axis == 'x') {
+      array[i + 1] = y * cos(angle) - z * sin(angle);
+      array[i + 2] = y * sin(angle) + z * cos(angle);
+    } else if (axis == 'y') {
+      array[i] = x * cos(angle) + z * sin(angle);
+      array[i + 2] = -x * sin(angle) + z * cos(angle);
+    } else if (axis == 'z') {
+      array[i] = x * cos(angle) - y * sin(angle);
+      array[i + 1] = x * sin(angle) + y * cos(angle);
+    }
   }
 }
 
@@ -42,7 +42,7 @@ void scale(model *m, float xs, float ys, float zs) {
 }
 
 void _scale(float *array, size_t size, float xs, float ys, float zs) {
-  for(size_t i = 0; i < size; i += 3) {
+  for (size_t i = 0; i < size; i += 3) {
     array[i] *= xs;
     array[i + 1] *= ys;
     array[i + 2] *= zs;

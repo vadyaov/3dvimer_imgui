@@ -1,79 +1,69 @@
 #include "main.hpp"
 
-static void ImGui_Scale(model *m, Settings& s) {
+static void ImGui_Scale(model *m, Settings &s) {
   ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
   if (s.addScale < 0) s.addScale = -1 / s.addScale;
-  if (ImGui::Button("ScaleX"))
-    scale(m, s.addScale, 1, 1);
+  if (ImGui::Button("ScaleX")) scale(m, s.addScale, 1, 1);
   ImGui::SameLine();
-  if (ImGui::Button("ScaleY"))
-    scale(m, 1, s.addScale, 1);
+  if (ImGui::Button("ScaleY")) scale(m, 1, s.addScale, 1);
   ImGui::SameLine();
-  if (ImGui::Button("ScaleZ"))
-    scale(m, 1, 1, s.addScale);
+  if (ImGui::Button("ScaleZ")) scale(m, 1, 1, s.addScale);
 }
 
-static void ImGui_Move(model *m, Settings& s) {
+static void ImGui_Move(model *m, Settings &s) {
   ImGui::SliderFloat("Move range", &s.moveRange, 0.0f, 10.0f);
   ImGui::PushButtonRepeat(true);
-  if (ImGui::ArrowButton("##left", ImGuiDir_Left))
-    move(m, -s.moveRange, 0, 0);
+  if (ImGui::ArrowButton("##left", ImGuiDir_Left)) move(m, -s.moveRange, 0, 0);
   ImGui::SameLine();
-  if (ImGui::ArrowButton("##right", ImGuiDir_Right))
-    move(m, s.moveRange, 0, 0);
+  if (ImGui::ArrowButton("##right", ImGuiDir_Right)) move(m, s.moveRange, 0, 0);
   ImGui::SameLine();
-  if (ImGui::ArrowButton("##up", ImGuiDir_Up))
-    move(m, 0, s.moveRange, 0);
+  if (ImGui::ArrowButton("##up", ImGuiDir_Up)) move(m, 0, s.moveRange, 0);
   ImGui::SameLine();
-  if (ImGui::ArrowButton("##down", ImGuiDir_Down))
-    move(m, 0, -s.moveRange, 0);
+  if (ImGui::ArrowButton("##down", ImGuiDir_Down)) move(m, 0, -s.moveRange, 0);
   ImGui::SameLine();
-  if (ImGui::Button("Farther(-Z)"))
-    move(m, 0, 0, -s.moveRange);
+  if (ImGui::Button("Farther(-Z)")) move(m, 0, 0, -s.moveRange);
   ImGui::SameLine();
-  if (ImGui::Button("Closer(+Z)"))
-    move(m, 0, 0, s.moveRange);
+  if (ImGui::Button("Closer(+Z)")) move(m, 0, 0, s.moveRange);
   ImGui::PopButtonRepeat();
 }
 
-static void ImGui_Rotate(model *m, Settings&s) {
+static void ImGui_Rotate(model *m, Settings &s) {
   ImGui::SliderAngle("Angle", &s.angle);
   ImGui::PushButtonRepeat(true);
-  if (ImGui::Button("RotateX"))
-    rotate(m, s.angle, 'x');
+  if (ImGui::Button("RotateX")) rotate(m, s.angle, 'x');
   ImGui::SameLine();
-  if (ImGui::Button("RotateY"))
-    rotate(m, s.angle, 'y');
+  if (ImGui::Button("RotateY")) rotate(m, s.angle, 'y');
   ImGui::SameLine();
-  if (ImGui::Button("RotateZ"))
-    rotate(m, s.angle, 'z');
+  if (ImGui::Button("RotateZ")) rotate(m, s.angle, 'z');
   ImGui::PopButtonRepeat();
 }
 
-static void ImGui_ColorSceme(Settings& s) {
+static void ImGui_ColorSceme(Settings &s) {
   ImGui::SameLine();
-  ImGui::RadioButton("Dark", &s.scheme, 0); ImGui::SameLine();
+  ImGui::RadioButton("Dark", &s.scheme, 0);
+  ImGui::SameLine();
   ImGui::RadioButton("Light", &s.scheme, 1);
   if (!s.scheme)
-   ImGui::StyleColorsDark();
+    ImGui::StyleColorsDark();
   else
     ImGui::StyleColorsLight();
 }
 
-static void ImGui_Info(model *m, Settings& s) {
+static void ImGui_Info(model *m, Settings &s) {
   ImGui::Text("File:%s", s.filenamePtr);
   ImGui::Text("Model:%s", s.modelnamePtr);
-  ImGui::Text("Vertex:%zu", m->vertexNumber);ImGui::SameLine();
-  ImGui::Text("\tIndex:%zu", m->indexNumber);ImGui::SameLine();
-  ImGui::Text("\tEdges:%d", m->edges);ImGui::SameLine();
+  ImGui::Text("Vertex:%zu", m->vertexNumber);
+  ImGui::SameLine();
+  ImGui::Text("\tIndex:%zu", m->indexNumber);
+  ImGui::SameLine();
+  ImGui::Text("\tEdges:%d", m->edges);
+  ImGui::SameLine();
   HelpMarker("Include joint edjes of 2 triangles");
 }
 
-int main(int, char**) {
-  
+int main(int, char **) {
   glfwSetErrorCallback(glfw_error_callback);
-  if (!glfwInit())
-    return 1;
+  if (!glfwInit()) return 1;
 
 #if defined(__APPLE__)
   // GL 3.2 + GLSL 150
@@ -93,7 +83,8 @@ int main(int, char**) {
   /* glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); */
 #endif
 
-  GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "3DViewer_1.0", NULL, NULL);
+  GLFWwindow *window =
+      glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "3DViewer_1.0", NULL, NULL);
   if (NULL == window) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -101,11 +92,10 @@ int main(int, char**) {
   }
 
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(1); // Enable vsync
+  glfwSwapInterval(1);  // Enable vsync
 
   glewExperimental = true;
-  if (glewInit() != GLEW_OK)
-    return 1;
+  if (glewInit() != GLEW_OK) return 1;
 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
@@ -113,13 +103,14 @@ int main(int, char**) {
   // Setup dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  ImGuiIO &io = ImGui::GetIO();
+  (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
   // Setup Platform/Renderer backends
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
-  
+
   ImGui::FileBrowser fileDialog;
   fileDialog.SetTitle("Choose model");
   fileDialog.SetTypeFilters({".obj"});
@@ -147,8 +138,9 @@ int main(int, char**) {
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(s.clear_color.x * s.clear_color.w, s.clear_color.y * s.clear_color.w,
-               s.clear_color.z * s.clear_color.w, s.clear_color.w);
+    glClearColor(s.clear_color.x * s.clear_color.w,
+                 s.clear_color.y * s.clear_color.w,
+                 s.clear_color.z * s.clear_color.w, s.clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     processInput(window);
 
@@ -166,7 +158,9 @@ int main(int, char**) {
     glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
 
     if (s.perspective) {
-      projection = glm::perspective(glm::radians(50.0f), (float) SCREEN_WIDTH / (float) SCREEN_HEIGHT, 0.1f, 500.0f);
+      projection = glm::perspective(glm::radians(50.0f),
+                                    (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
+                                    0.1f, 500.0f);
       /* view = glm::translate(view, glm::vec3(0.0f, 0.0f, -s.zoom)); */
     } else {
       projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 500.0f);
@@ -174,19 +168,22 @@ int main(int, char**) {
 
     if (s.triangles) {
       makeMVP(model, view, projection, shaderProgram);
-      glUniform4f(vertexColorLocation, s.vertex_color.x, s.vertex_color.y, s.vertex_color.z, s.vertex_color.w);
-      draw(vertexVBO, m.allIndex * 3, &m.vertexArray[0], VAO, GL_TRIANGLES, s.linewidth);
+      glUniform4f(vertexColorLocation, s.vertex_color.x, s.vertex_color.y,
+                  s.vertex_color.z, s.vertex_color.w);
+      draw(vertexVBO, m.allIndex * 3, &m.vertexArray[0], VAO, GL_TRIANGLES,
+           s.linewidth);
     }
 
     if (s.lines) {
       makeMVP(model, view, projection, shaderProgram);
-      glUniform4f(vertexColorLocation, s.edge_color.x, s.edge_color.y, s.edge_color.z, s.edge_color.w);
-      draw(linesVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES, s.linewidth);
+      glUniform4f(vertexColorLocation, s.edge_color.x, s.edge_color.y,
+                  s.edge_color.z, s.edge_color.w);
+      draw(linesVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES,
+           s.linewidth);
     }
 
     glDisableVertexAttribArray(0);
     ImGuiSettingsWindow(window, s, &m, fileDialog);
-
 
     // Rendering
     render(s.clear_color, window);
@@ -215,7 +212,7 @@ int main(int, char**) {
   return 0;
 }
 
-void HelpMarker(const char* desc) {
+void HelpMarker(const char *desc) {
   ImGui::TextDisabled("(?)");
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
     ImGui::BeginTooltip();
@@ -226,7 +223,7 @@ void HelpMarker(const char* desc) {
   }
 }
 
-void glfw_error_callback(int error, const char* description) {
+void glfw_error_callback(int error, const char *description) {
   fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
@@ -242,7 +239,7 @@ void startFrame() {
   ImGui::NewFrame();
 }
 
-void render(ImVec4 &clear_color, GLFWwindow* window) {
+void render(ImVec4 &clear_color, GLFWwindow *window) {
   ImGui::Render();
   int display_w, display_h;
   glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -250,7 +247,7 @@ void render(ImVec4 &clear_color, GLFWwindow* window) {
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-std::string getFilename(std::string& path) {
+std::string getFilename(std::string &path) {
   return path.substr(path.find_last_of('/') + 1);
 }
 
@@ -295,8 +292,8 @@ void initSettings(Settings *s) {
       } else if (i == 10) {
         for (size_t j = 0; line[j] != '\n' && line[j] != '\0'; j++)
           s->path += line[j];
-          s->filename = getFilename(s->path);
-          s->filenamePtr = s->filename.c_str();
+        s->filename = getFilename(s->path);
+        s->filenamePtr = s->filename.c_str();
       } else if (i == 11) {
         s->scheme = atoi(line);
       } else if (i == 12) {
@@ -307,11 +304,13 @@ void initSettings(Settings *s) {
       } else if (i == 13) {
         if (std::atoi(line) == 1)
           s->bmp = true;
-        else s->bmp = false;
+        else
+          s->bmp = false;
       } else if (i == 14) {
         if (std::atoi(line) == 1)
           s->jpeg = true;
-        else s->jpeg = false;
+        else
+          s->jpeg = false;
       }
       i++;
     }
@@ -322,7 +321,8 @@ void initSettings(Settings *s) {
   }
 }
 
-void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint shaderProgram) {
+void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
+             GLuint shaderProgram) {
   GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
   GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
@@ -331,17 +331,17 @@ void makeMVP(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint sh
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type, int linewidth) {
+void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
+          int linewidth) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), array, GL_STATIC_DRAW);
-  
+
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void *)0);
 
   glBindVertexArray(VAO);
-  if (type == GL_LINES)
-    glLineWidth(linewidth);
+  if (type == GL_LINES) glLineWidth(linewidth);
   glDrawArrays(type, 0, size);
 }
 
@@ -361,9 +361,12 @@ void saveSettings(const char *str, Settings *s) {
     fprintf(fp, "%d\n", s->linewidth);
     fprintf(fp, "%d\n", s->triangles);
     fprintf(fp, "%d\n", s->lines);
-    fprintf(fp, "%f %f %f %f\n", s->clear_color.x, s->clear_color.y, s->clear_color.z, s->clear_color.w);
-    fprintf(fp, "%f %f %f %f\n", s->vertex_color.x, s->vertex_color.y, s->vertex_color.z, s->vertex_color.w);
-    fprintf(fp, "%f %f %f %f\n", s->edge_color.x, s->edge_color.y, s->edge_color.z, s->edge_color.w);
+    fprintf(fp, "%f %f %f %f\n", s->clear_color.x, s->clear_color.y,
+            s->clear_color.z, s->clear_color.w);
+    fprintf(fp, "%f %f %f %f\n", s->vertex_color.x, s->vertex_color.y,
+            s->vertex_color.z, s->vertex_color.w);
+    fprintf(fp, "%f %f %f %f\n", s->edge_color.x, s->edge_color.y,
+            s->edge_color.z, s->edge_color.w);
     fprintf(fp, "%s\n", s->path.c_str());
     fprintf(fp, "%d\n", s->scheme);
     fprintf(fp, "%d\n", s->perspective);
@@ -373,10 +376,10 @@ void saveSettings(const char *str, Settings *s) {
   }
 }
 
-void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileBrowser& fileDialog) {
+void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
+                         ImGui::FileBrowser &fileDialog) {
   ImGui::Begin("Settings");
-  if (ImGui::Button("Browse obj"))
-    fileDialog.Open();
+  if (ImGui::Button("Browse obj")) fileDialog.Open();
 
   ImGui_ColorSceme(s);
   ImGui_Info(m, s);
@@ -394,31 +397,34 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileB
     free(m->linesArray);
     parseobj(s.path.c_str(), m);
   }
-  ImGui::SameLine(); HelpMarker("Resets the position, scale, rotation");
+  ImGui::SameLine();
+  HelpMarker("Resets the position, scale, rotation");
 
-  ImGui::ColorEdit3("Background color", (float*)&s.clear_color);
-  ImGui::ColorEdit3("Vertex color", (float*)&s.vertex_color);
-  ImGui::ColorEdit3("Edge color", (float*)&s.edge_color);
+  ImGui::ColorEdit3("Background color", (float *)&s.clear_color);
+  ImGui::ColorEdit3("Vertex color", (float *)&s.vertex_color);
+  ImGui::ColorEdit3("Edge color", (float *)&s.edge_color);
 
   ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
-  ImGui::SameLine(); HelpMarker("CTRL + click to input value");
+  ImGui::SameLine();
+  HelpMarker("CTRL + click to input value");
 
   ImGui::Checkbox("Triangles", &s.triangles);
   ImGui::SameLine();
   ImGui::Checkbox("Lines", &s.lines);
 
-  ImGui::RadioButton("Ortho", &s.perspective, 0); ImGui::SameLine();
+  ImGui::RadioButton("Ortho", &s.perspective, 0);
+  ImGui::SameLine();
   ImGui::RadioButton("Perspective", &s.perspective, 1);
 
-  if (ImGui::Button("ScreenShot"))
-    makeScreenShot(window, s);
+  if (ImGui::Button("ScreenShot")) makeScreenShot(window, s);
 
   ImGui::SameLine();
   ImGui::Checkbox("BMP", &s.bmp);
   ImGui::SameLine();
   ImGui::Checkbox("JPEG", &s.jpeg);
 
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
 
   fileDialog.Display();
@@ -435,22 +441,21 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings& s, model *m, ImGui::FileB
   }
 }
 
-void makeScreenShot(GLFWwindow *window, Settings& s) {
+void makeScreenShot(GLFWwindow *window, Settings &s) {
   int height = 0;
   int width = 0;
   glfwGetFramebufferSize(window, &width, &height);
 
-  SDL_Surface * temp = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 24, 0x000000FF, 0x0000FF00, 0x00FF0000, 0);
-  if (temp == NULL)
-    glfw_error_callback(1, "CreateRGBSurface failed");
+  SDL_Surface *temp = SDL_CreateRGBSurface(
+      SDL_SWSURFACE, width, height, 24, 0x000000FF, 0x0000FF00, 0x00FF0000, 0);
+  if (temp == NULL) glfw_error_callback(1, "CreateRGBSurface failed");
 
   unsigned char pixels[width * height * 3];
   glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-  for (int i = 0 ; i < height ; i++)
-    std::memcpy( ((char *) temp->pixels) + temp->pitch * i, pixels + 3 * width * (height - i - 1), width * 3);
-  if (s.bmp)
-    SDL_SaveBMP(temp, "ScreenShot.bmp");
-  if (s.jpeg)
-    SDL_SaveBMP(temp, "ScreenShot.jpeg");
+  for (int i = 0; i < height; i++)
+    std::memcpy(((char *)temp->pixels) + temp->pitch * i,
+                pixels + 3 * width * (height - i - 1), width * 3);
+  if (s.bmp) SDL_SaveBMP(temp, "ScreenShot.bmp");
+  if (s.jpeg) SDL_SaveBMP(temp, "ScreenShot.jpeg");
   SDL_FreeSurface(temp);
 }

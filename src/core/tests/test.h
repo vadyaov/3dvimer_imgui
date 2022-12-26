@@ -1,6 +1,6 @@
 #include <check.h>
 
-#include "../parseobj.h"
 #include "../affinity.h"
+#include "../parseobj.h"
 
 Suite *VimerSuite();
