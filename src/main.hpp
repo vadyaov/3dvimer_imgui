@@ -25,7 +25,7 @@ extern "C" {
 
 #include "imgui/imfilebrowser.h"
 
-#define GL_SILENCE_DEPRECATION
+//#define GL_SILENCE_DEPRECATION
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 
