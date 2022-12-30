@@ -34,12 +34,14 @@ typedef struct ProgramState {
   float addScale;
   float moveRange;
   float angle;
+  float pointsize;
   int linewidth;
-  bool triangles, lines;
+  bool triangles, lines, points;
 
   ImVec4 clear_color;
   ImVec4 vertex_color;
   ImVec4 edge_color;
+  ImVec4 point_color;
 
   std::string path;
   std::string filename;
@@ -62,7 +64,7 @@ void initSettings(Settings *s);
 void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
              GLuint shaderProgram);
 void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
-          int linewidth);
+          int linewidth, float pointsize);
 void cleanFile(const char *str);
 void saveSettings(const char *str, Settings *s);
 void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,

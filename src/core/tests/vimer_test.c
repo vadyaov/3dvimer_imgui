@@ -37,11 +37,12 @@ START_TEST(parser_t1) {
   ck_assert_uint_eq(m.lineIndex, 36);
   ck_assert_str_eq(m.name, "Prism");
   for (size_t i = 0; i < m.allIndex * 3; i++)
-    ck_assert_float_eq_tol(waitingTriangles[i], m.vertexArray[i], 1e-6);
+    ck_assert_float_eq_tol(waitingTriangles[i], m.trianglesArray[i], 1e-6);
   for (size_t i = 0; i < m.lineIndex * 3; i++)
     ck_assert_float_eq_tol(waitingLines[i], m.linesArray[i], 1e-6);
 
   free(m.vertexArray);
+  free(m.trianglesArray);
   free(m.linesArray);
   if (m.name) free(m.name);
 }
@@ -72,11 +73,12 @@ START_TEST(parser_t2) {
   ck_assert_uint_eq(m.lineIndex, 36);
   ck_assert_str_eq(m.name, "Pyramid");
   for (size_t i = 0; i < m.allIndex * 3; i++)
-    ck_assert_float_eq_tol(waitingTriangles[i], m.vertexArray[i], 1e-6);
+    ck_assert_float_eq_tol(waitingTriangles[i], m.trianglesArray[i], 1e-6);
   for (size_t i = 0; i < m.lineIndex * 3; i++)
     ck_assert_float_eq_tol(waitingLines[i], m.linesArray[i], 1e-6);
 
   free(m.vertexArray);
+  free(m.trianglesArray);
   free(m.linesArray);
   if (m.name) free(m.name);
 }
@@ -117,10 +119,10 @@ START_TEST(affinity_move) {
   move(&m, 0.5f, 1.0f, -0.5f);
 
   for (size_t i = 0; i < m.allIndex * 3; i += 3) {
-    ck_assert_float_eq_tol(waitingTriangles[i], m.vertexArray[i] - 0.5f, 1e-6);
-    ck_assert_float_eq_tol(waitingTriangles[i + 1], m.vertexArray[i + 1] - 1.0f,
+    ck_assert_float_eq_tol(waitingTriangles[i], m.trianglesArray[i] - 0.5f, 1e-6);
+    ck_assert_float_eq_tol(waitingTriangles[i + 1], m.trianglesArray[i + 1] - 1.0f,
                            1e-6);
-    ck_assert_float_eq_tol(waitingTriangles[i + 2], m.vertexArray[i + 2] + 0.5f,
+    ck_assert_float_eq_tol(waitingTriangles[i + 2], m.trianglesArray[i + 2] + 0.5f,
                            1e-6);
   }
   for (size_t i = 0; i < m.lineIndex * 3; i += 3) {
@@ -132,6 +134,7 @@ START_TEST(affinity_move) {
   }
 
   free(m.vertexArray);
+  free(m.trianglesArray);
   free(m.linesArray);
   if (m.name) free(m.name);
 }
@@ -179,8 +182,8 @@ START_TEST(affinity_rotateX) {
     float waitValue1 = y * cos(angle) - z * sin(angle);
     float waitValue2 = y * sin(angle) + z * cos(angle);
 
-    ck_assert_float_eq_tol(m.vertexArray[i + 1], waitValue1, 1e-6);
-    ck_assert_float_eq_tol(m.vertexArray[i + 2], waitValue2, 1e-6);
+    ck_assert_float_eq_tol(m.trianglesArray[i + 1], waitValue1, 1e-6);
+    ck_assert_float_eq_tol(m.trianglesArray[i + 2], waitValue2, 1e-6);
   }
 
   for (size_t i = 0; i < m.lineIndex * 3; i += 3) {
@@ -194,6 +197,7 @@ START_TEST(affinity_rotateX) {
   }
 
   free(m.vertexArray);
+  free(m.trianglesArray);
   free(m.linesArray);
   if (m.name) free(m.name);
 }
@@ -242,8 +246,8 @@ START_TEST(affinity_rotateY) {
     float waitValue1 = x * cos(angle) + z * sin(angle);
     float waitValue2 = -x * sin(angle) + z * cos(angle);
 
-    ck_assert_float_eq_tol(m.vertexArray[i], waitValue1, 1e-6);
-    ck_assert_float_eq_tol(m.vertexArray[i + 2], waitValue2, 1e-6);
+    ck_assert_float_eq_tol(m.trianglesArray[i], waitValue1, 1e-6);
+    ck_assert_float_eq_tol(m.trianglesArray[i + 2], waitValue2, 1e-6);
   }
 
   for (size_t i = 0; i < m.lineIndex * 3; i += 3) {
@@ -259,6 +263,7 @@ START_TEST(affinity_rotateY) {
   }
 
   free(m.vertexArray);
+  free(m.trianglesArray);
   free(m.linesArray);
   if (m.name) free(m.name);
 }
@@ -307,8 +312,8 @@ START_TEST(affinity_rotateZ) {
     float waitValue1 = x * cos(angle) - y * sin(angle);
     float waitValue2 = x * sin(angle) + y * cos(angle);
 
-    ck_assert_float_eq_tol(m.vertexArray[i], waitValue1, 1e-6);
-    ck_assert_float_eq_tol(m.vertexArray[i + 1], waitValue2, 1e-6);
+    ck_assert_float_eq_tol(m.trianglesArray[i], waitValue1, 1e-6);
+    ck_assert_float_eq_tol(m.trianglesArray[i + 1], waitValue2, 1e-6);
   }
 
   for (size_t i = 0; i < m.lineIndex * 3; i += 3) {
@@ -324,6 +329,7 @@ START_TEST(affinity_rotateZ) {
   }
 
   free(m.vertexArray);
+  free(m.trianglesArray);
   free(m.linesArray);
   if (m.name) free(m.name);
 }
@@ -367,10 +373,10 @@ START_TEST(affinity_Scale) {
   scale(&m, xs, ys, zs);
 
   for (size_t i = 0; i < m.allIndex * 3; i += 3) {
-    ck_assert_float_eq_tol(m.vertexArray[i], waitingTriangles[i] * xs, 1e-6);
-    ck_assert_float_eq_tol(m.vertexArray[i + 1], waitingTriangles[i + 1] * ys,
+    ck_assert_float_eq_tol(m.trianglesArray[i], waitingTriangles[i] * xs, 1e-6);
+    ck_assert_float_eq_tol(m.trianglesArray[i + 1], waitingTriangles[i + 1] * ys,
                            1e-6);
-    ck_assert_float_eq_tol(m.vertexArray[i + 2], waitingTriangles[i + 2] * zs,
+    ck_assert_float_eq_tol(m.trianglesArray[i + 2], waitingTriangles[i + 2] * zs,
                            1e-6);
   }
 
@@ -381,6 +387,7 @@ START_TEST(affinity_Scale) {
   }
 
   free(m.vertexArray);
+  free(m.trianglesArray);
   free(m.linesArray);
   if (m.name) free(m.name);
 }

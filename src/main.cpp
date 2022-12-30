@@ -130,11 +130,14 @@ int main(int, char **) {
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
-  GLuint vertexVBO;
-  glGenBuffers(1, &vertexVBO);
+  GLuint triangleVBO;
+  glGenBuffers(1, &triangleVBO);
 
-  GLuint linesVBO;
-  glGenBuffers(1, &linesVBO);
+  GLuint lineVBO;
+  glGenBuffers(1, &lineVBO);
+
+  GLuint pointVBO;
+  glGenBuffers(1, &pointVBO);
 
   // Main loop
   while (!glfwWindowShouldClose(window)) {
@@ -170,15 +173,22 @@ int main(int, char **) {
     if (s.triangles) {
       glUniform4f(vertexColorLocation, s.vertex_color.x, s.vertex_color.y,
                   s.vertex_color.z, s.vertex_color.w);
-      draw(vertexVBO, m.allIndex * 3, &m.vertexArray[0], VAO, GL_TRIANGLES,
-           s.linewidth);
+      draw(triangleVBO, m.allIndex * 3, &m.trianglesArray[0], VAO, GL_TRIANGLES,
+           s.linewidth, s.pointsize);
     }
 
     if (s.lines) {
       glUniform4f(vertexColorLocation, s.edge_color.x, s.edge_color.y,
                   s.edge_color.z, s.edge_color.w);
-      draw(linesVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES,
-           s.linewidth);
+      draw(lineVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES,
+           s.linewidth, s.pointsize);
+    }
+
+    if (s.points) {
+      glUniform4f(vertexColorLocation, s.point_color.x, s.point_color.y,
+                  s.point_color.z, s.point_color.w);
+      draw(pointVBO, m.vertexNumber * 3, &m.vertexArray[0], VAO, GL_POINTS,
+           s.linewidth, s.pointsize);
     }
 
     glDisableVertexAttribArray(0);
@@ -201,8 +211,9 @@ int main(int, char **) {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 
-  glDeleteBuffers(1, &vertexVBO);
-  glDeleteBuffers(1, &linesVBO);
+  glDeleteBuffers(1, &pointVBO);
+  glDeleteBuffers(1, &triangleVBO);
+  glDeleteBuffers(1, &lineVBO);
   glDeleteProgram(shaderProgram);
   glDeleteVertexArrays(1, &VAO);
 
@@ -258,7 +269,7 @@ void initSettings(Settings *s) {
     size_t len = 0;
     size_t i = 0;
     float r = 0.0f, g = 0.0f, b = 0.0f, w = 0.0f;
-    while (i < 15) {
+    while (i < 18) {
       getline(&line, &len, f);
       if (0 == i) {
         s->zoom = std::atof(line);
@@ -269,44 +280,54 @@ void initSettings(Settings *s) {
       } else if (3 == i) {
         s->angle = std::atof(line);
       } else if (4 == i) {
-        s->linewidth = std::atoi(line);
+        s->pointsize = std::atof(line);
       } else if (5 == i) {
+        s->linewidth = std::atoi(line);
+      } else if (6 == i) {
         if (std::atoi(line) == 1)
           s->triangles = true;
         else
           s->triangles = false;
-      } else if (6 == i) {
+      } else if (7 == i) {
         if (std::atoi(line) == 1)
           s->lines = true;
         else
           s->lines = false;
-      } else if (i == 7) {
-        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
-        s->clear_color = ImVec4(r, g, b, w);
-      } else if (i == 8) {
-        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
-        s->vertex_color = ImVec4(r, g, b, w);
+      } else if (8 == i) {
+        if (std::atoi(line) == 1)
+          s->points = true;
+        else
+          s->points = false;
       } else if (i == 9) {
         sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
-        s->edge_color = ImVec4(r, g, b, w);
+        s->clear_color = ImVec4(r, g, b, w);
       } else if (i == 10) {
+        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
+        s->vertex_color = ImVec4(r, g, b, w);
+      } else if (i == 11) {
+        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
+        s->edge_color = ImVec4(r, g, b, w);
+      } else if (i == 12) {
+        sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
+        s->point_color = ImVec4(r, g, b, w);
+      } else if (i == 13) {
         for (size_t j = 0; line[j] != '\n' && line[j] != '\0'; j++)
           s->path += line[j];
         s->filename = getFilename(s->path);
         s->filenamePtr = s->filename.c_str();
-      } else if (i == 11) {
+      } else if (i == 14) {
         s->scheme = atoi(line);
-      } else if (i == 12) {
+      } else if (i == 15) {
         if (std::atoi(line) == 1)
           s->perspective = true;
         else
           s->perspective = false;
-      } else if (i == 13) {
+      } else if (i == 16) {
         if (std::atoi(line) == 1)
           s->bmp = true;
         else
           s->bmp = false;
-      } else if (i == 14) {
+      } else if (i == 17) {
         if (std::atoi(line) == 1)
           s->jpeg = true;
         else
@@ -332,23 +353,7 @@ void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
 }
 
 void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
-          int linewidth) {
-  /* if (type == GL_LINES) { */
-  /*   int k = 0; */
-  /*   int m = 0; */
-  /*   for (size_t i = 0; i < size; k++, i++, m++) { */
-  /*     if (k == 3) { */
-  /*       printf("  "); */
-  /*       k = 0; */
-  /*     } */
-  /*     if ( m == 9) { */
-  /*       printf("\n"); */
-  /*       m = 0; */
-  /*     } */
-  /*     printf("%f ", array[i]); */
-  /*   } */
-  /*   printf("\n\n"); */
-  /* } */
+          int linewidth, float pointsize) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), array, GL_STATIC_DRAW);
 
@@ -356,8 +361,9 @@ void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void *)0);
 
   glBindVertexArray(VAO);
-  if (type == GL_LINES) glLineWidth(linewidth);
-  glDrawArrays(type, 0, size);
+  glPointSize(pointsize);
+  glLineWidth(linewidth);
+  glDrawArrays(type, 0, size / 3);
 }
 
 void cleanFile(const char *str) {
@@ -373,15 +379,19 @@ void saveSettings(const char *str, Settings *s) {
     fprintf(fp, "%f\n", s->addScale);
     fprintf(fp, "%f\n", s->moveRange);
     fprintf(fp, "%f\n", s->angle);
+    fprintf(fp, "%f\n", s->pointsize);
     fprintf(fp, "%d\n", s->linewidth);
     fprintf(fp, "%d\n", s->triangles);
     fprintf(fp, "%d\n", s->lines);
+    fprintf(fp, "%d\n", s->points);
     fprintf(fp, "%f %f %f %f\n", s->clear_color.x, s->clear_color.y,
             s->clear_color.z, s->clear_color.w);
     fprintf(fp, "%f %f %f %f\n", s->vertex_color.x, s->vertex_color.y,
             s->vertex_color.z, s->vertex_color.w);
     fprintf(fp, "%f %f %f %f\n", s->edge_color.x, s->edge_color.y,
             s->edge_color.z, s->edge_color.w);
+    fprintf(fp, "%f %f %f %f\n", s->point_color.x, s->point_color.y,
+            s->point_color.z, s->point_color.w);
     fprintf(fp, "%s\n", s->path.c_str());
     fprintf(fp, "%d\n", s->scheme);
     fprintf(fp, "%d\n", s->perspective);
@@ -408,7 +418,7 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
   ImGui::Separator();
 
   if (ImGui::Button("RESET ALL")) {
-    free(m->vertexArray);
+    free(m->trianglesArray);
     free(m->linesArray);
     parseobj(s.path.c_str(), m);
   }
@@ -418,14 +428,20 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
   ImGui::ColorEdit3("Background color", (float *)&s.clear_color);
   ImGui::ColorEdit3("Vertex color", (float *)&s.vertex_color);
   ImGui::ColorEdit3("Edge color", (float *)&s.edge_color);
+  ImGui::ColorEdit3("Point Color", (float *)&s.point_color);
 
   ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
+  ImGui::SameLine();
+  HelpMarker("CTRL + click to input value");
+  ImGui::SliderFloat("Point Size", &s.pointsize, 0.0f, 10.0f);
   ImGui::SameLine();
   HelpMarker("CTRL + click to input value");
 
   ImGui::Checkbox("Triangles", &s.triangles);
   ImGui::SameLine();
   ImGui::Checkbox("Lines", &s.lines);
+  ImGui::SameLine();
+  ImGui::Checkbox("Points", &s.points);
 
   ImGui::RadioButton("Ortho", &s.perspective, 0);
   ImGui::SameLine();
@@ -447,8 +463,9 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
     s.path = fileDialog.GetSelected();
     s.filename = getFilename(s.path);
     s.filenamePtr = s.filename.c_str();
-    if (m->vertexArray) free(m->vertexArray);
+    if (m->trianglesArray) free(m->trianglesArray);
     if (m->linesArray) free(m->linesArray);
+    if (m->vertexArray) free(m->vertexArray);
     if (m->name) free(m->name);
     parseobj(s.path.c_str(), m);
     s.modelnamePtr = m->name;

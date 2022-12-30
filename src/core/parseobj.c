@@ -7,23 +7,24 @@ void parseobj(const char *filename, model *m) {
   if (file) {
     count(file, &m->vertexNumber, &m->indexNumber);
     m->edges = m->vertexNumber + m->indexNumber - 2;
-    /* printf("v:%zu\tf:%zu\n", m->vertexNumber, m->indexNumber); */
 
     size_t v_size = 3 * m->vertexNumber;
 
-    float *vertices = (float *)calloc(v_size, sizeof(float));
-    if (!vertices) exit(1);
+    m->vertexArray = (float *)calloc(v_size, sizeof(float));
+    if (!m->vertexArray) exit(1);
 
     int *mainIndexArray = NULL;
     int *edgeIndexArray = NULL;
 
-    int e = parse(file, vertices, &mainIndexArray, &edgeIndexArray, m);
+    int e = parse(file, &mainIndexArray, &edgeIndexArray, m);
 
     /* printf("lines:%zu\ttriangles:%zu\n-----VERTICES-----\n", m->lineIndex,
      * m->allIndex); */
 
+    /* printf("VERTEX\n"); */
     /* for (size_t i = 0; i < m->vertexNumber * 3; i++) */
-    /*   printf("%f ", vertices[i]); */
+    /*   printf("%f ", m->vertexArray[i]); */
+    /* printf("\n\n"); */
 
     /* printf("\n-----FACES TRIAN-----\n"); */
     /* for (size_t j = 0; j < m->allIndex; j++) */
@@ -34,22 +35,22 @@ void parseobj(const char *filename, model *m) {
     /*   printf("%d ", edgeIndexArray[j]); */
 
     if (!e) {
-      m->vertexArray = (float *)calloc(m->allIndex * 3, sizeof(float));
-      if (m->vertexArray)
+      m->trianglesArray = (float *)calloc(m->allIndex * 3, sizeof(float));
+      if (m->trianglesArray)
         for (size_t i = 0, k = 0; k < m->allIndex; i += 3, k++)
           for (size_t j = 0; j < 3; j++)
-            m->vertexArray[i + j] = vertices[(mainIndexArray[k] - 1) * 3 + j];
+            m->trianglesArray[i + j] = m->vertexArray[(mainIndexArray[k] - 1) * 3 + j];
     }
 
     m->linesArray = (float *)calloc(m->lineIndex * 3, sizeof(float));
     if (m->linesArray)
       for (size_t i = 0, k = 0; k < m->lineIndex; i += 3, k++)
         for (size_t j = 0; j < 3; j++)
-          m->linesArray[i + j] = vertices[(edgeIndexArray[k] - 1) * 3 + j];
+          m->linesArray[i + j] = m->vertexArray[(edgeIndexArray[k] - 1) * 3 + j];
 
     /*   printf("\n-----AFTER INDEXING-----\n"); */
     /*   for (size_t i = 0, j = 0; i < m->allIndex * 3; i++) { */
-    /*     printf("%f ", m->vertexArray[i]); */
+    /*     printf("%f ", m->trianglesArray[i]); */
     /*     j++; */
     /*     if (j == 3) { */
     /*       printf("\n"); */
@@ -67,7 +68,6 @@ void parseobj(const char *filename, model *m) {
     /*     } */
     /*   } */
 
-    free(vertices);
     free(mainIndexArray);
     free(edgeIndexArray);
     fclose(file);
@@ -76,6 +76,7 @@ void parseobj(const char *filename, model *m) {
 
 void initModel(model *m) {
   m->vertexArray = NULL;
+  m->trianglesArray = NULL;
   m->linesArray = NULL;
   m->name = NULL;
   m->vertexNumber = 0;
@@ -99,7 +100,7 @@ void count(FILE *file, size_t *vertexNumber, size_t *indexNumber) {
   fseek(file, 0, SEEK_SET);
 }
 
-int parse(FILE *file, float *v, int **f, int **fl, model *m) {
+int parse(FILE *file, int **f, int **fl, model *m) {
   int errMark = 0;
   char *line = NULL;
   size_t len = 0;
@@ -107,7 +108,7 @@ int parse(FILE *file, float *v, int **f, int **fl, model *m) {
 
   while (getline(&line, &len, file) != -1) {
     if (line[0] == 'v' && line[1] == ' ') {
-      sscanf(line + 2, "%f %f %f", v + i, v + i + 1, v + i + 2);
+      sscanf(line + 2, "%f %f %f", &m->vertexArray[i], &m->vertexArray[i + 1], &m->vertexArray[i + 2]);
       i += 3;
     } else if (line[0] == 'f' && line[1] == ' ') {
       size_t k = 2, startj = j, startp = p;
