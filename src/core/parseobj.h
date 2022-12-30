@@ -26,6 +26,6 @@ void initModel(model *m);
 void count(FILE *file, size_t *vertexNumber, size_t *indexNumber);
 int parse(FILE*, int**, int**, model*);
 int toInt(char *src, size_t *i);
-size_t spaceNum(char *line);
+size_t spaceNum(const char *line);
 void loadObjectName(char *line, char **name);
 size_t nameSize(char *line);

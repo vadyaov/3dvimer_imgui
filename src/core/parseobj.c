@@ -125,13 +125,13 @@ int parse(FILE *file, int **f, int **fl, model *m) {
 
       if (!errMark) {
         *f = (int *)realloc(*f, m->allIndex * sizeof(int));
-        if (!f) {
+        if (NULL == f) {
           if (fl) free(fl);
           exit(1);
         }
       }
       *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
-      if (!fl) {
+      if (NULL == fl) {
         if (f) free(f);
         exit(1);
       }
@@ -197,7 +197,7 @@ size_t nameSize(char *line) {
   return l;
 }
 
-size_t spaceNum(char *line) {
+size_t spaceNum(const char *line) {
   size_t sp = 0, i = 0;
   while (line[i] != '\0') {
     if (line[i] == ' ' && line[i + 1] != '\0') sp++;

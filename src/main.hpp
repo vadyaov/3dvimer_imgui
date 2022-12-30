@@ -55,7 +55,7 @@ typedef struct ProgramState {
 } Settings;
 
 std::string getFilename(std::string &path);
-void render(ImVec4 &clear_color, GLFWwindow *window);
+void render(GLFWwindow *window);
 void startFrame();
 void processInput(GLFWwindow *window);
 void glfw_error_callback(int error, const char *description);

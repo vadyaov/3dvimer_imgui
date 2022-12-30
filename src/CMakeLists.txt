@@ -9,6 +9,8 @@ set(APP_VERSION_MINOR 0)
 
 set(APP_TARGET vimer.app)
 
+add_compile_options(-Wall -Wextra -pedantic -Werror -std=c11)
+
 add_subdirectory(imgui)
 include_directories(${PROJECT_SOURCE_DIR})
 add_executable(${APP_TARGET}

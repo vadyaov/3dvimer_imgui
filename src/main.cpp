@@ -173,21 +173,21 @@ int main(int, char **) {
     if (s.triangles) {
       glUniform4f(vertexColorLocation, s.vertex_color.x, s.vertex_color.y,
                   s.vertex_color.z, s.vertex_color.w);
-      draw(triangleVBO, m.allIndex * 3, &m.trianglesArray[0], VAO, GL_TRIANGLES,
+      draw(triangleVBO, m.allIndex, &m.trianglesArray[0], VAO, GL_TRIANGLES,
            s.linewidth, s.pointsize);
     }
 
     if (s.lines) {
       glUniform4f(vertexColorLocation, s.edge_color.x, s.edge_color.y,
                   s.edge_color.z, s.edge_color.w);
-      draw(lineVBO, m.lineIndex * 3, &m.linesArray[0], VAO, GL_LINES,
+      draw(lineVBO, m.lineIndex, &m.linesArray[0], VAO, GL_LINES,
            s.linewidth, s.pointsize);
     }
 
     if (s.points) {
       glUniform4f(vertexColorLocation, s.point_color.x, s.point_color.y,
                   s.point_color.z, s.point_color.w);
-      draw(pointVBO, m.vertexNumber * 3, &m.vertexArray[0], VAO, GL_POINTS,
+      draw(pointVBO, m.vertexNumber, &m.vertexArray[0], VAO, GL_POINTS,
            s.linewidth, s.pointsize);
     }
 
@@ -195,7 +195,7 @@ int main(int, char **) {
     ImGuiSettingsWindow(window, s, &m, fileDialog);
 
     // Rendering
-    render(s.clear_color, window);
+    render(window);
 
     glfwSwapBuffers(window);
     // Poll and handle events (inputs, window resize, etc.)
@@ -250,7 +250,7 @@ void startFrame() {
   ImGui::NewFrame();
 }
 
-void render(ImVec4 &clear_color, GLFWwindow *window) {
+void render(GLFWwindow *window) {
   ImGui::Render();
   int display_w, display_h;
   glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -355,7 +355,7 @@ void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
 void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
           int linewidth, float pointsize) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), array, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), array, GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void *)0);
@@ -363,7 +363,7 @@ void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
   glBindVertexArray(VAO);
   glPointSize(pointsize);
   glLineWidth(linewidth);
-  glDrawArrays(type, 0, size / 3);
+  glDrawArrays(type, 0, size);
 }
 
 void cleanFile(const char *str) {
@@ -482,7 +482,8 @@ void makeScreenShot(GLFWwindow *window, Settings &s) {
       SDL_SWSURFACE, width, height, 24, 0x000000FF, 0x0000FF00, 0x00FF0000, 0);
   if (temp == NULL) glfw_error_callback(1, "CreateRGBSurface failed");
 
-  unsigned char pixels[width * height * 3];
+  char *pixels = (char*)calloc(width * height * 3, sizeof(char));
+  if (pixels) {
   glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
   for (int i = 0; i < height; i++)
     std::memcpy(((char *)temp->pixels) + temp->pitch * i,
@@ -490,4 +491,6 @@ void makeScreenShot(GLFWwindow *window, Settings &s) {
   if (s.bmp) SDL_SaveBMP(temp, "ScreenShot.bmp");
   if (s.jpeg) SDL_SaveBMP(temp, "ScreenShot.jpeg");
   SDL_FreeSurface(temp);
+  free(pixels);
+  }
 }
