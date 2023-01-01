@@ -1,5 +1,44 @@
 #include "main.hpp"
 
+static void fileBrowser(ImGui::FileBrowser &fileDialog, Settings& s, model *m) {
+  fileDialog.Display();
+  if (fileDialog.HasSelected()) {
+    s.path = fileDialog.GetSelected();
+    s.filename = getFilename(s.path);
+    s.filenamePtr = s.filename.c_str();
+    clearModelMemory(m);
+    parseobj(s.path.c_str(), m);
+    s.modelnamePtr = m->name;
+    fileDialog.ClearSelected();
+  }
+}
+
+static void ImGui_RenderSettings(Settings& s) {
+  ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
+  ImGui::SameLine();
+  HelpMarker("CTRL + click to input value");
+  ImGui::SliderFloat("Point Size", &s.pointsize, 0.0f, 10.0f);
+  ImGui::SameLine();
+  HelpMarker("CTRL + click to input value");
+
+  ImGui::Checkbox("Triangles", &s.triangles);
+  ImGui::SameLine();
+  ImGui::Checkbox("Lines", &s.lines);
+  ImGui::SameLine();
+  ImGui::Checkbox("Points", &s.points);
+
+  ImGui::RadioButton("Ortho", &s.perspective, 0);
+  ImGui::SameLine();
+  ImGui::RadioButton("Perspective", &s.perspective, 1);
+}
+
+static void ImGui_Colors(Settings &s) {
+  ImGui::ColorEdit3("Background color", (float *)&s.clear_color);
+  ImGui::ColorEdit3("Polygon color", (float *)&s.vertex_color);
+  ImGui::ColorEdit3("Edge color", (float *)&s.edge_color);
+  ImGui::ColorEdit3("Vertex Color", (float *)&s.point_color);
+}
+
 static void ImGui_Scale(model *m, Settings &s) {
   ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
   if (s.addScale < 0) s.addScale = -1 / s.addScale;
@@ -203,6 +242,7 @@ int main(int, char **) {
     if (glfwWindowShouldClose(window)) {
       cleanFile("savefile.vimer");
       saveSettings("savefile.vimer", &s);
+      clearModelMemory(&m);
     }
   }
 
@@ -404,7 +444,8 @@ void saveSettings(const char *str, Settings *s) {
 void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
                          ImGui::FileBrowser &fileDialog) {
   ImGui::Begin("Settings");
-  if (ImGui::Button("Browse obj")) fileDialog.Open();
+  if (ImGui::Button("Browse obj"))
+    fileDialog.Open();
 
   ImGui_ColorSceme(s);
   ImGui_Info(m, s);
@@ -418,36 +459,17 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
   ImGui::Separator();
 
   if (ImGui::Button("RESET ALL")) {
-    free(m->trianglesArray);
-    free(m->linesArray);
+    clearModelMemory(m);
     parseobj(s.path.c_str(), m);
+    s.modelnamePtr = m->name;
   }
   ImGui::SameLine();
   HelpMarker("Resets the position, scale, rotation");
 
-  ImGui::ColorEdit3("Background color", (float *)&s.clear_color);
-  ImGui::ColorEdit3("Vertex color", (float *)&s.vertex_color);
-  ImGui::ColorEdit3("Edge color", (float *)&s.edge_color);
-  ImGui::ColorEdit3("Point Color", (float *)&s.point_color);
-
-  ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
-  ImGui::SameLine();
-  HelpMarker("CTRL + click to input value");
-  ImGui::SliderFloat("Point Size", &s.pointsize, 0.0f, 10.0f);
-  ImGui::SameLine();
-  HelpMarker("CTRL + click to input value");
-
-  ImGui::Checkbox("Triangles", &s.triangles);
-  ImGui::SameLine();
-  ImGui::Checkbox("Lines", &s.lines);
-  ImGui::SameLine();
-  ImGui::Checkbox("Points", &s.points);
-
-  ImGui::RadioButton("Ortho", &s.perspective, 0);
-  ImGui::SameLine();
-  ImGui::RadioButton("Perspective", &s.perspective, 1);
-
-  if (ImGui::Button("ScreenShot")) makeScreenShot(window, s);
+  ImGui_Colors(s);
+  ImGui_RenderSettings(s);
+  if (ImGui::Button("ScreenShot"))
+    makeScreenShot(window, s);
 
   ImGui::SameLine();
   ImGui::Checkbox("BMP", &s.bmp);
@@ -458,19 +480,7 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
               1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
 
-  fileDialog.Display();
-  if (fileDialog.HasSelected()) {
-    s.path = fileDialog.GetSelected();
-    s.filename = getFilename(s.path);
-    s.filenamePtr = s.filename.c_str();
-    if (m->trianglesArray) free(m->trianglesArray);
-    if (m->linesArray) free(m->linesArray);
-    if (m->vertexArray) free(m->vertexArray);
-    if (m->name) free(m->name);
-    parseobj(s.path.c_str(), m);
-    s.modelnamePtr = m->name;
-    fileDialog.ClearSelected();
-  }
+  fileBrowser(fileDialog, s, m);
 }
 
 void makeScreenShot(GLFWwindow *window, Settings &s) {
@@ -493,4 +503,11 @@ void makeScreenShot(GLFWwindow *window, Settings &s) {
   SDL_FreeSurface(temp);
   free(pixels);
   }
+}
+
+void clearModelMemory(model *m) {
+    if (m->trianglesArray) free(m->trianglesArray);
+    if (m->linesArray) free(m->linesArray);
+    if (m->vertexArray) free(m->vertexArray);
+    if (m->name) free(m->name);
 }

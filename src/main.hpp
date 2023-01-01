@@ -1,7 +1,7 @@
 #pragma once
 
-#include </Users/neelyarl/.brew/opt/glew/include/GL/glew.h>
-#include </Users/neelyarl/.brew/opt/glfw/include/GLFW/glfw3.h>  // will drag system opengl headers
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>  // will drag system opengl headers
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -12,16 +12,16 @@ extern "C" {
 #include "core/parseobj.h"
 }
 
-#include </Users/neelyarl/.brew/opt/glm/include/glm/glm.hpp>
-#include </Users/neelyarl/.brew/opt/glm/include/glm/gtc/matrix_transform.hpp>
-#include </Users/neelyarl/.brew/opt/glm/include/glm/gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <iostream>
 
 #include "shaders/glshader.hpp"
 
 //#include </Users/neelyarl/.brew/Cellar/sdl2/2.26.1/include/SDL2/SDL.h>
-#include </Users/neelyarl/.brew/Cellar/sdl2/2.26.1/include/SDL2/SDL_surface.h>
+#include <SDL2/SDL_surface.h>
 
 #include "imgui/imfilebrowser.h"
 
@@ -70,3 +70,4 @@ void saveSettings(const char *str, Settings *s);
 void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
                          ImGui::FileBrowser &fileDialog);
 void makeScreenShot(GLFWwindow *window, Settings &s);
+void clearModelMemory(model *m);

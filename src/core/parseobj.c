@@ -3,7 +3,6 @@
 void parseobj(const char *filename, model *m) {
   initModel(m);
   FILE *file = fopen(filename, "r");
-
   if (file) {
     count(file, &m->vertexNumber, &m->indexNumber);
     m->edges = m->vertexNumber + m->indexNumber - 2;
