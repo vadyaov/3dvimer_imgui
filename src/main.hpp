@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _SRC_MAIN_CPP_
+#define _SRC_MAIN_CPP_
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>  // will drag system opengl headers
@@ -30,7 +31,6 @@ extern "C" {
 #define SCREEN_HEIGHT 720
 
 typedef struct ProgramState {
-  float zoom;
   float addScale;
   float moveRange;
   float angle;
@@ -54,20 +54,40 @@ typedef struct ProgramState {
   bool jpeg, bmp;
 } Settings;
 
+typedef struct CameraSettings {
+    glm::vec3 cameraPos;
+    glm::vec3 cameraFront;
+    glm::vec3 cameraUp;
+
+    float deltaTime;
+    float lastFrame;
+    float speed;
+
+    bool firstMouse = true;
+    float yaw;
+    float pitch;
+    float lastX;
+    float lastY;
+    float fov;
+} Camera;
+
 std::string getFilename(std::string &path);
 void render(GLFWwindow *window);
 void startFrame();
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow *window, Camera *cam);
 void glfw_error_callback(int error, const char *description);
 void HelpMarker(const char *desc);
-void initSettings(Settings *s);
+void initSettings(Settings *s, Camera *cam);
+void initCameraBasics(Camera *cam);
 void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
              GLuint shaderProgram);
 void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
           int linewidth, float pointsize);
 void cleanFile(const char *str);
-void saveSettings(const char *str, Settings *s);
-void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
+void saveSettings(const char *str, Settings *s, Camera *cam);
+void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m, Camera *cam,
                          ImGui::FileBrowser &fileDialog);
 void makeScreenShot(GLFWwindow *window, Settings &s);
 void clearModelMemory(model *m);
+
+#endif // _SRC_MAIN_CPP_

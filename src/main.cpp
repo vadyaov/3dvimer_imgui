@@ -17,19 +17,19 @@ static void ImGui_RenderSettings(Settings& s) {
   ImGui::SliderInt("Edge width", &s.linewidth, 1, 5);
   ImGui::SameLine();
   HelpMarker("CTRL + click to input value");
-  ImGui::SliderFloat("Point Size", &s.pointsize, 0.0f, 10.0f);
+  ImGui::SliderFloat("Vertex Size", &s.pointsize, 0.0f, 10.0f);
   ImGui::SameLine();
   HelpMarker("CTRL + click to input value");
 
-  ImGui::Checkbox("Triangles", &s.triangles);
+  ImGui::Checkbox("GL_TRIANGLES", &s.triangles);
   ImGui::SameLine();
-  ImGui::Checkbox("Lines", &s.lines);
+  ImGui::Checkbox("GL_LINES", &s.lines);
   ImGui::SameLine();
-  ImGui::Checkbox("Points", &s.points);
+  ImGui::Checkbox("GL_POINTS", &s.points);
 
-  ImGui::RadioButton("Ortho", &s.perspective, 0);
+  ImGui::RadioButton("GL_ORTHO", &s.perspective, 0);
   ImGui::SameLine();
-  ImGui::RadioButton("Perspective", &s.perspective, 1);
+  ImGui::RadioButton("GL_PERSPECTIVE", &s.perspective, 1);
 }
 
 static void ImGui_Colors(Settings &s) {
@@ -42,11 +42,12 @@ static void ImGui_Colors(Settings &s) {
 static void ImGui_Scale(model *m, Settings &s) {
   ImGui::SliderFloat("Scale coef", &s.addScale, 0.1f, 5.0f, "%.3f");
   if (s.addScale < 0) s.addScale = -1 / s.addScale;
-  if (ImGui::Button("ScaleX")) scale(m, s.addScale, 1, 1);
+  if (ImGui::Button("X-Scale")) scale(m, s.addScale, 1, 1);
   ImGui::SameLine();
-  if (ImGui::Button("ScaleY")) scale(m, 1, s.addScale, 1);
+  if (ImGui::Button("Y-Scale")) scale(m, 1, s.addScale, 1);
   ImGui::SameLine();
-  if (ImGui::Button("ScaleZ")) scale(m, 1, 1, s.addScale);
+  if (ImGui::Button("Z-Scale")) scale(m, 1, 1, s.addScale);
+  ImGui::Separator();
 }
 
 static void ImGui_Move(model *m, Settings &s) {
@@ -60,10 +61,11 @@ static void ImGui_Move(model *m, Settings &s) {
   ImGui::SameLine();
   if (ImGui::ArrowButton("##down", ImGuiDir_Down)) move(m, 0, -s.moveRange, 0);
   ImGui::SameLine();
-  if (ImGui::Button("Farther(-Z)")) move(m, 0, 0, -s.moveRange);
+  if (ImGui::Button("-Z")) move(m, 0, 0, -s.moveRange);
   ImGui::SameLine();
-  if (ImGui::Button("Closer(+Z)")) move(m, 0, 0, s.moveRange);
+  if (ImGui::Button("+Z")) move(m, 0, 0, s.moveRange);
   ImGui::PopButtonRepeat();
+  ImGui::Separator();
 }
 
 static void ImGui_Rotate(model *m, Settings &s) {
@@ -75,6 +77,7 @@ static void ImGui_Rotate(model *m, Settings &s) {
   ImGui::SameLine();
   if (ImGui::Button("RotateZ")) rotate(m, s.angle, 'z');
   ImGui::PopButtonRepeat();
+  ImGui::Separator();
 }
 
 static void ImGui_ColorSceme(Settings &s) {
@@ -98,6 +101,7 @@ static void ImGui_Info(model *m, Settings &s) {
   ImGui::Text("\tEdges:%d", m->edges);
   ImGui::SameLine();
   HelpMarker("Include joint edjes of 2 triangles");
+  ImGui::Separator();
 }
 
 int main(int, char **) {
@@ -158,9 +162,12 @@ int main(int, char **) {
   GLuint vertexColorLocation = glGetUniformLocation(shaderProgram, "my_color");
   glUseProgram(shaderProgram);
 
+  Camera cam;
+  initCameraBasics(&cam);
+
   model m;
   Settings s;
-  initSettings(&s);
+  initSettings(&s, &cam);
 
   parseobj(s.path.c_str(), &m);
   s.modelnamePtr = m.name;
@@ -184,7 +191,13 @@ int main(int, char **) {
                  s.clear_color.y * s.clear_color.w,
                  s.clear_color.z * s.clear_color.w, s.clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    processInput(window);
+
+    float currentFrame = static_cast<float>(glfwGetTime());
+    cam.deltaTime = currentFrame - cam.lastFrame;
+    cam.lastFrame = currentFrame;
+
+    processInput(window, &cam);
+    /* std::cout << cam.cameraPos.x << " " << cam.cameraPos.y << " " << cam.cameraPos.z << "\n"; */
 
     // Start the Dear Imgui frame
     startFrame();
@@ -193,17 +206,12 @@ int main(int, char **) {
     /* glm::mat4 view = glm::mat4(1.0f); */
     glm::mat4 projection;
 
-    glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, s.zoom);
-    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    glm::mat4 view = glm::lookAt(cameraPos, cameraFront, cameraUp);
+    glm::mat4 view = glm::lookAt(cam.cameraPos, cam.cameraFront, cam.cameraUp);
 
     if (s.perspective) {
       projection = glm::perspective(glm::radians(50.0f),
                                     (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT,
                                     0.1f, 500.0f);
-      /* view = glm::translate(view, glm::vec3(0.0f, 0.0f, -s.zoom)); */
     } else {
       projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 500.0f);
     }
@@ -231,7 +239,7 @@ int main(int, char **) {
     }
 
     glDisableVertexAttribArray(0);
-    ImGuiSettingsWindow(window, s, &m, fileDialog);
+    ImGuiSettingsWindow(window, s, &m, &cam, fileDialog);
 
     // Rendering
     render(window);
@@ -241,7 +249,7 @@ int main(int, char **) {
     glfwPollEvents();
     if (glfwWindowShouldClose(window)) {
       cleanFile("savefile.vimer");
-      saveSettings("savefile.vimer", &s);
+      saveSettings("savefile.vimer", &s, &cam);
       clearModelMemory(&m);
     }
   }
@@ -279,9 +287,19 @@ void glfw_error_callback(int error, const char *description) {
 }
 
 // closing window by pressing ESC
-void processInput(GLFWwindow *window) {
+void processInput(GLFWwindow *window, Camera *cam) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
+
+  float cameraSpeed = static_cast<float>(cam->speed * cam->deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+      cam->cameraPos += cameraSpeed * cam->cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+      cam->cameraPos -= cameraSpeed * cam->cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+      cam->cameraPos -= glm::normalize(glm::cross(cam->cameraFront, cam->cameraUp)) * cameraSpeed;
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+      cam->cameraPos += glm::normalize(glm::cross(cam->cameraFront, cam->cameraUp)) * cameraSpeed;
 }
 
 void startFrame() {
@@ -302,76 +320,82 @@ std::string getFilename(std::string &path) {
   return path.substr(path.find_last_of('/') + 1);
 }
 
-void initSettings(Settings *s) {
+void initSettings(Settings *s, Camera *cam) {
   FILE *f = fopen("savefile.vimer", "r");
   if (f) {
     char *line = NULL;
     size_t len = 0;
     size_t i = 0;
     float r = 0.0f, g = 0.0f, b = 0.0f, w = 0.0f;
-    while (i < 18) {
+    while (i < 21) {
       getline(&line, &len, f);
       if (0 == i) {
-        s->zoom = std::atof(line);
-      } else if (1 == i) {
         s->addScale = std::atof(line);
-      } else if (2 == i) {
+      } else if (1 == i) {
         s->moveRange = std::atof(line);
-      } else if (3 == i) {
+      } else if (2 == i) {
         s->angle = std::atof(line);
-      } else if (4 == i) {
+      } else if (3 == i) {
         s->pointsize = std::atof(line);
-      } else if (5 == i) {
+      } else if (4 == i) {
         s->linewidth = std::atoi(line);
-      } else if (6 == i) {
+      } else if (5 == i) {
         if (std::atoi(line) == 1)
           s->triangles = true;
         else
           s->triangles = false;
-      } else if (7 == i) {
+      } else if (6 == i) {
         if (std::atoi(line) == 1)
           s->lines = true;
         else
           s->lines = false;
-      } else if (8 == i) {
+      } else if (7 == i) {
         if (std::atoi(line) == 1)
           s->points = true;
         else
           s->points = false;
-      } else if (i == 9) {
+      } else if (8 == i) {
         sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
         s->clear_color = ImVec4(r, g, b, w);
-      } else if (i == 10) {
+      } else if (9 == i) {
         sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
         s->vertex_color = ImVec4(r, g, b, w);
-      } else if (i == 11) {
+      } else if (10 == i) {
         sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
         s->edge_color = ImVec4(r, g, b, w);
-      } else if (i == 12) {
+      } else if (11 == i) {
         sscanf(line, "%f %f %f %f", &r, &g, &b, &w);
         s->point_color = ImVec4(r, g, b, w);
-      } else if (i == 13) {
+      } else if (12 == i) {
         for (size_t j = 0; line[j] != '\n' && line[j] != '\0'; j++)
           s->path += line[j];
         s->filename = getFilename(s->path);
         s->filenamePtr = s->filename.c_str();
-      } else if (i == 14) {
+      } else if (13 == i) {
         s->scheme = atoi(line);
-      } else if (i == 15) {
+      } else if (14 == i) {
         if (std::atoi(line) == 1)
           s->perspective = true;
         else
           s->perspective = false;
-      } else if (i == 16) {
+      } else if (15 == i) {
         if (std::atoi(line) == 1)
           s->bmp = true;
         else
           s->bmp = false;
-      } else if (i == 17) {
+      } else if (16 == i) {
         if (std::atoi(line) == 1)
           s->jpeg = true;
         else
           s->jpeg = false;
+      } else if (17 == i) {
+        sscanf(line, "%f %f %f", &cam->cameraPos.x, &cam->cameraPos.y, &cam->cameraPos.z);
+      } else if (18 == i) {
+        sscanf(line, "%f %f %f", &cam->cameraFront.x, &cam->cameraFront.y, &cam->cameraFront.z);
+      } else if (19 == i) {
+        sscanf(line, "%f %f %f", &cam->cameraUp.x, &cam->cameraUp.y, &cam->cameraUp.z);
+      } else if (20 == i) {
+        sscanf(line, "%f", &cam->speed);
       }
       i++;
     }
@@ -380,6 +404,17 @@ void initSettings(Settings *s) {
   } else {
     std::cout << "No savefile.vimer in current directory\n";
   }
+}
+
+void initCameraBasics(Camera *cam) {
+  cam->deltaTime = 0.0f;
+  cam->lastFrame = 0.0f;
+  cam->firstMouse = true;
+  cam->yaw = -90.0f;
+  cam->pitch = 0.0f;
+  cam->lastX = (float)SCREEN_WIDTH / 2.0f;
+  cam->lastY = (float)SCREEN_HEIGHT / 2.0f;
+  cam->fov = 45.0f;
 }
 
 void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
@@ -412,10 +447,9 @@ void cleanFile(const char *str) {
   ofs.close();
 }
 
-void saveSettings(const char *str, Settings *s) {
+void saveSettings(const char *str, Settings *s, Camera *cam) {
   FILE *fp = fopen(str, "w");
   if (fp) {
-    fprintf(fp, "%f\n", s->zoom);
     fprintf(fp, "%f\n", s->addScale);
     fprintf(fp, "%f\n", s->moveRange);
     fprintf(fp, "%f\n", s->angle);
@@ -437,11 +471,15 @@ void saveSettings(const char *str, Settings *s) {
     fprintf(fp, "%d\n", s->perspective);
     fprintf(fp, "%d\n", s->bmp);
     fprintf(fp, "%d\n", s->jpeg);
+    fprintf(fp, "%f %f %f\n", cam->cameraPos.x, cam->cameraPos.y, cam->cameraPos.z);
+    fprintf(fp, "%f %f %f\n", cam->cameraFront.x, cam->cameraFront.y, cam->cameraFront.z);
+    fprintf(fp, "%f %f %f\n", cam->cameraUp.x, cam->cameraUp.y, cam->cameraUp.z);
+    fprintf(fp, "%f", cam->speed);
     fclose(fp);
   }
 }
 
-void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
+void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m, Camera *cam,
                          ImGui::FileBrowser &fileDialog) {
   ImGui::Begin("Settings");
   if (ImGui::Button("Browse obj"))
@@ -449,19 +487,18 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m,
 
   ImGui_ColorSceme(s);
   ImGui_Info(m, s);
-  ImGui::Separator();
-  ImGui::SliderFloat("Zoom", &s.zoom, 200.0f, 1.0f);
+  ImGui::SliderFloat("Camera Speed", &cam->speed, 1.0f, 10.0f);
   ImGui_Scale(m, s);
-  ImGui::Separator();
   ImGui_Move(m, s);
-  ImGui::Separator();
   ImGui_Rotate(m, s);
-  ImGui::Separator();
 
   if (ImGui::Button("RESET ALL")) {
     clearModelMemory(m);
     parseobj(s.path.c_str(), m);
     s.modelnamePtr = m->name;
+    cam->cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+    cam->cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    cam->cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
   ImGui::SameLine();
   HelpMarker("Resets the position, scale, rotation");
