@@ -303,12 +303,6 @@ void initSettings(Settings *s, Camera *cam) {
 void initCameraBasics(Camera *cam) {
   cam->deltaTime = 0.0f;
   cam->lastFrame = 0.0f;
-  cam->firstMouse = true;
-  cam->yaw = -90.0f;
-  cam->pitch = 0.0f;
-  cam->lastX = static_cast<float>(SCREEN_WIDTH / 2.0f);
-  cam->lastY = static_cast<float>(SCREEN_HEIGHT / 2.0f);
-  cam->fov = 45.0f;
 }
 
 void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,

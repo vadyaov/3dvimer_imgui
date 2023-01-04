@@ -59,13 +59,6 @@ typedef struct CameraSettings {
   float deltaTime;
   float lastFrame;
   float speed;
-
-  bool firstMouse = true;
-  float yaw;
-  float pitch;
-  float lastX;
-  float lastY;
-  float fov;
 } Camera;
 
 void render(GLFWwindow *);
