@@ -67,3 +67,7 @@ clean: uninstall
 	@$(RM) imgui.ini
 	@$(RM) ScreenShot.jpeg
 	@$(RM) ScreenShot.bmp
+	@$(RM) -r imgui/CMakeFiles/
+	@$(RM) imgui/cmake_install.cmake
+	@$(RM) imgui/Makefile
+	@$(RM) imgui/libimgui.a

@@ -1,8 +1,8 @@
-#ifndef _SRC_MAIN_CPP_
-#define _SRC_MAIN_CPP_
+#ifndef MAIN_HPP
+#define MAIN_HPP
 
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>  // will drag system opengl headers
+#include <GLFW/glfw3.h>
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -13,20 +13,17 @@ extern "C" {
 #include "core/parseobj.h"
 }
 
+#include <SDL2/SDL_surface.h>
+
+#include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <fstream>
 #include <iostream>
 
+#include "imgui/imfilebrowser.h"
 #include "shaders/glshader.hpp"
 
-//#include </Users/neelyarl/.brew/Cellar/sdl2/2.26.1/include/SDL2/SDL.h>
-#include <SDL2/SDL_surface.h>
-
-#include "imgui/imfilebrowser.h"
-
-//#define GL_SILENCE_DEPRECATION
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 
@@ -55,39 +52,46 @@ typedef struct ProgramState {
 } Settings;
 
 typedef struct CameraSettings {
-    glm::vec3 cameraPos;
-    glm::vec3 cameraFront;
-    glm::vec3 cameraUp;
+  glm::vec3 cameraPos;
+  glm::vec3 cameraFront;
+  glm::vec3 cameraUp;
 
-    float deltaTime;
-    float lastFrame;
-    float speed;
+  float deltaTime;
+  float lastFrame;
+  float speed;
 
-    bool firstMouse = true;
-    float yaw;
-    float pitch;
-    float lastX;
-    float lastY;
-    float fov;
+  bool firstMouse = true;
+  float yaw;
+  float pitch;
+  float lastX;
+  float lastY;
+  float fov;
 } Camera;
 
-std::string getFilename(std::string &path);
-void render(GLFWwindow *window);
+void render(GLFWwindow *);
 void startFrame();
-void processInput(GLFWwindow *window, Camera *cam);
-void glfw_error_callback(int error, const char *description);
-void HelpMarker(const char *desc);
-void initSettings(Settings *s, Camera *cam);
-void initCameraBasics(Camera *cam);
-void makeMVP(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
-             GLuint shaderProgram);
-void draw(GLuint VBO, size_t size, float *array, GLuint VAO, GLuint type,
-          int linewidth, float pointsize);
-void cleanFile(const char *str);
-void saveSettings(const char *str, Settings *s, Camera *cam);
-void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m, Camera *cam,
-                         ImGui::FileBrowser &fileDialog);
-void makeScreenShot(GLFWwindow *window, Settings &s);
-void clearModelMemory(model *m);
+void processInput(GLFWwindow *, Camera *);
+void glfw_error_callback(int, const char *);
+void HelpMarker(const char *);
+void initSettings(Settings *, Camera *);
+void initCameraBasics(Camera *);
+void makeMVP(glm::mat4 &, glm::mat4 &, glm::mat4 &, GLuint);
+void draw(GLuint, size_t, float *, GLuint, GLuint, int, float);
+void cleanFile(const char *);
+void saveSettings(const char *, Settings *, Camera *);
+void ImGuiSettingsWindow(GLFWwindow *, Settings &, model *, Camera *,
+                         ImGui::FileBrowser &);
+void makeScreenShot(GLFWwindow *, Settings &);
+void clearModelMemory(model *);
+std::string getFilename(std::string &);
 
-#endif // _SRC_MAIN_CPP_
+void fileBrowser(ImGui::FileBrowser &, Settings &, model *);
+void ImGui_Info(model *, Settings &);
+void ImGui_ColorSceme(Settings &);
+void ImGui_Rotate(model *, Settings &);
+void ImGui_Move(model *, Settings &);
+void ImGui_Scale(model *, Settings &);
+void ImGui_Colors(Settings &);
+void ImGui_RenderSettings(Settings &);
+
+#endif /* MAIN_HPP */

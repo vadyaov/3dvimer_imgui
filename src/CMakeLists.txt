@@ -36,13 +36,13 @@ include_directories(${OPENGL_INCLUDE_DIRS})
 find_package(GLEW 2.0 REQUIRED)
 include_directories(${GLEW_INCLUDE_DIRS})
 
-# if (APPLE)
+if (APPLE)
     # find_library(COCOA_LIBRARY Cocoa)
     find_library(OpenGL_LIBRARY OpenGL)
     # find_library(IOKIT_LIBRARY IOKit)
     # find_library(COREVIDEO_LIBRARY CoreVideo)
     SET(EXTRA_LIBS ${OpenGL_LIBRARY})
-# endif (APPLE)
+endif (APPLE)
 
 target_link_libraries(
         ${APP_TARGET}

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CORE_PARSEOBJ_H
+#define CORE_PARSEOBJ_H
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -21,11 +22,13 @@ typedef struct {
   int edges;
 } model;
 
-void parseobj(const char *filename, model *m);
-void initModel(model *m);
-void count(FILE *file, size_t *vertexNumber, size_t *indexNumber);
-int parse(FILE*, int**, int**, model*);
-int toInt(char *src, size_t *i);
-size_t spaceNum(const char *line);
-void loadObjectName(char *line, char **name);
-size_t nameSize(char *line);
+void parseobj(const char *, model *);
+void initModel(model *);
+void countVF(FILE *, size_t *, size_t *);
+int parse(FILE *, int **, int **, model *);
+int toInt(char *, size_t *);
+size_t spaceNum(const char *);
+void loadObjectName(char *, char **);
+size_t nameSize(char *);
+
+#endif /* CORE_PARSEOBJ_H */

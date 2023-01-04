@@ -1,9 +1,21 @@
 #include "affinity.h"
 
 void move(model *m, float x, float y, float z) {
-  _move(m->trianglesArray, m->allIndex * 3, x, y, z);
-  _move(m->linesArray, m->lineIndex * 3, x, y, z);
   _move(m->vertexArray, m->vertexNumber * 3, x, y, z);
+  _move(m->linesArray, m->lineIndex * 3, x, y, z);
+  _move(m->trianglesArray, m->allIndex * 3, x, y, z);
+}
+
+void rotate(model *m, float angle, char axis) {
+  _rotate(m->vertexArray, angle, m->vertexNumber * 3, axis);
+  _rotate(m->linesArray, angle, m->lineIndex * 3, axis);
+  _rotate(m->trianglesArray, angle, m->allIndex * 3, axis);
+}
+
+void scale(model *m, float xs, float ys, float zs) {
+  _scale(m->vertexArray, m->vertexNumber * 3, xs, ys, zs);
+  _scale(m->linesArray, m->lineIndex * 3, xs, ys, zs);
+  _scale(m->trianglesArray, m->allIndex * 3, xs, ys, zs);
 }
 
 void _move(float *array, size_t size, float x, float y, float z) {
@@ -12,12 +24,6 @@ void _move(float *array, size_t size, float x, float y, float z) {
     array[i + 1] += y;
     array[i + 2] += z;
   }
-}
-
-void rotate(model *m, float angle, char axis) {
-  _rotate(m->trianglesArray, angle, m->allIndex * 3, axis);
-  _rotate(m->linesArray, angle, m->lineIndex * 3, axis);
-  _rotate(m->vertexArray, angle, m->vertexNumber * 3, axis);
 }
 
 void _rotate(float *array, float angle, size_t size, char axis) {
@@ -36,12 +42,6 @@ void _rotate(float *array, float angle, size_t size, char axis) {
       array[i + 1] = x * sin(angle) + y * cos(angle);
     }
   }
-}
-
-void scale(model *m, float xs, float ys, float zs) {
-  _scale(m->trianglesArray, m->allIndex * 3, xs, ys, zs);
-  _scale(m->linesArray, m->lineIndex * 3, xs, ys, zs);
-  _scale(m->vertexArray, m->vertexNumber * 3, xs, ys, zs);
 }
 
 void _scale(float *array, size_t size, float xs, float ys, float zs) {
