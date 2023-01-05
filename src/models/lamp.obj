@@ -1,9 +1,7 @@
 #  Viewpoint Datalabs International, Inc.  Copyright 1996
 
+o LAMP
 
-mtllib ./vp.mtl
-
-g
 v 0.000000 8.407028 0.000000
 v 0.000000 8.380042 -0.204985
 v 0.053054 8.380042 -0.198000

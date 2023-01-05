@@ -1,0 +1,85 @@
+\input texinfo
+@setfilename doc
+@settitle 3dViewer_1.0
+@documentencoding UTF-8
+
+@copying
+Copyright © 2023 by neelyarl
+@end copying
+
+@titlepage
+@title 3dViewer Guide
+@vskip
+@insertcopying
+@author neelyarl
+@end titlepage
+
+@ifnottex
+@node Top
+@top 3dViewer_1.0
+@insertcopying
+@end ifnottex
+
+@menu
+* General information:: This section provides common information about 3D Viewer.
+* OBJ format:: This section provides information about .obj files that can be used for rendering.
+* Affinity transformations:: This section provides information about affinity transformations for models.
+* Settings Window:: This section provides information about Settings Window usage.
+@end menu
+
+@node General information
+@chapter General information
+
+In this project, a program for viewing 3D models in a wireframe (3D Viewer) in the C/C++ programming language is implemented using Dear Imgui + OpenGL API. The models themselves are loaded from .obj files, it is possible to view them on the screen with the ability to rotate, scale and move.
+
+@node OBJ format
+@chapter Format .obj
+
+.obj file is a geometry description file format pioneered by Wavefront Technologies. The file format is open and accepted by many 3D graphics application vendors.
+
+The .obj file format is a simple data format that only represents the 3D geometry, namely the position of each vertex, the position of each vertex's UV texture coordinates, the vertex normals, and the faces that define each polygon as a list of texture vertices and vertices. obj coordinates do not have units, but obj files can contain scale information in a human-readable comment line.
+
+This project supports only vertices and indices, and only single spaces can appear between separators. Also, errors in the file are not allowed (less than 3 coordinates at one vertex (v), less than 2 indices (f), typos, etc.)
+
+@node Affinity transformations
+@chapter Affinity transformations
+
+An affine transformation is a mapping of a plane or space into itself, in which parallel lines go into parallel lines, intersecting - into intersecting, skew - into skew.
+A plane transformation is called affine if it is one-to-one and the image of any line is a line. A transformation (mapping) is called one-to-one (bijective) if it takes different points to different ones, and some point goes to each point.
+
+In this program, it is possible to perform movement along all axes, scaling along all axes, rotation around any axis.
+
+@node Settings Window
+@chapter Settings Window
+
+The settings window consists of fields, buttons, sliders, etc. for comfortable viewing of the 3D model.
+
+The Browse OBJ button allows you to select among the available models a 3D model for rendering.
+
+It is possible to choose a light or dark theme for the settings window.
+
+Below Browse Button is information about the loaded model: file name, model name (if available), number of vertices, indices and edges of the model (edges are counted together with common edges for 2 triangles).
+
+The Camera Speed slider allows you to adjust the speed of the camera movement. Camera movement is available by pressing the WASD keys.
+
+Scale coef slider and buttons S-Scale, Y-Scale, Z-Scale allow you to scale (multiply) the model by a given coefficient.
+
+The Move range slider allows you to set the distance for shifting the model along any axis. Move control is carried out using the arrows in the settings window, which are located under the move range slider.
+
+The Angle slider allows you to set the angle of rotation (in degrees). In order to rotate the model along any axis, under this slider there are 3 buttons for each of the axes.
+
+The RESET ALL button allows you to update the position of the model in space to its original position (as in the .obj file). and also set the basic location of the camera in space.
+
+You can use the corresponding fields to set the background color, model fill color, edge color and vertex color.
+
+To change the width of edges you can use Edge Width slider (works only for OpenGL 3.0, e.g. Linux).
+
+To change vertex size you can use Vertex Size slider.
+
+It is possible to customize the rendering of edges, polygons and vertices by checking the corresponding checkboxes.
+
+It is poosible to choose the projection matrix: GL_ORTHO - orthogonal projection; GL_PERSPECTIVE - perspective projection.
+
+To make screenshot of current opengl window just press ScreenShot Button and choose the format.
+
+@bye

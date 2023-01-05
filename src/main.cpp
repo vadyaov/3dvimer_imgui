@@ -27,14 +27,14 @@ int main(int, char **) {
   if (NULL == window) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
-    return 1;
+    return ERROR;
   }
 
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);  // Enable vsync
 
   glewExperimental = true;
-  if (glewInit() != GLEW_OK) return 1;
+  if (glewInit() != GLEW_OK) return ERROR;
 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
@@ -392,7 +392,7 @@ void ImGuiSettingsWindow(GLFWwindow *window, Settings &s, model *m, Camera *cam,
     cam->cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
   }
   ImGui::SameLine();
-  HelpMarker("Resets the position, scale, rotation");
+  HelpMarker("Resets camera and model position, scale, rotation");
 
   ImGui_Colors(s);
   ImGui_RenderSettings(s);

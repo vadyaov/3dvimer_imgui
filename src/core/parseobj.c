@@ -37,7 +37,6 @@ void parseobj(const char *filename, model *m) {
                   m->vertexArray[(edgeIndexArray[k] - 1) * 3 + j];
         free(edgeIndexArray);
       }
-
     }
     fclose(file);
   }
@@ -100,8 +99,7 @@ int parse(FILE *file, int **f, int **fl, model *m) {
           exit(1);
         }
       }
-      if (fl)
-        *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
+      if (fl) *fl = (int *)realloc(*fl, m->lineIndex * sizeof(int));
       if (NULL == fl) {
         if (f) free(f);
         exit(1);

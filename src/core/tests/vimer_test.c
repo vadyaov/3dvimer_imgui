@@ -394,6 +394,36 @@ START_TEST(affinity_Scale) {
 }
 END_TEST
 
+START_TEST(dragon) {
+  model m;
+  const char path[] = "../models/dragon.obj";
+
+  parseobj(path, &m);
+
+  ck_assert_str_eq(m.name, "Dragon");
+
+  free(m.vertexArray);
+  free(m.trianglesArray);
+  free(m.linesArray);
+  if (m.name) free(m.name);
+}
+END_TEST
+
+START_TEST(lamp) {
+  model m;
+  const char path[] = "../models/lamp.obj";
+
+  parseobj(path, &m);
+
+  ck_assert_str_eq(m.name, "LAMP");
+
+  free(m.vertexArray);
+  free(m.trianglesArray);
+  free(m.linesArray);
+  if (m.name) free(m.name);
+}
+END_TEST
+
 Suite *VimerSuite() {
   Suite *vimer = suite_create("[Vimer Unit Test]");
   TCase *tc = tcase_create("vimer");
@@ -406,6 +436,9 @@ Suite *VimerSuite() {
   tcase_add_test(tc, affinity_rotateY);
   tcase_add_test(tc, affinity_rotateZ);
   tcase_add_test(tc, affinity_Scale);
+
+  tcase_add_test(tc, dragon);
+  tcase_add_test(tc, lamp);
 
   suite_add_tcase(vimer, tc);
 

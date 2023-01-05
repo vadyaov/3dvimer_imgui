@@ -28,7 +28,7 @@ dist: create_dirs cpy_files
 
 dvi:
 	makeinfo documentation.texi --html
-	open ./documentation/index.html
+	open ./doc/index.html
 
 create_dirs:
 	@$(RM) -r $(ARCHIVE)
@@ -63,7 +63,7 @@ gcov_report:
 
 clean: uninstall
 	@cd $(LOGIC_DIR) ; make clean ; cd ./..
-	@$(RM) -r documentation/
+	@$(RM) -r doc/
 	@$(RM) imgui.ini
 	@$(RM) ScreenShot.jpeg
 	@$(RM) ScreenShot.bmp
